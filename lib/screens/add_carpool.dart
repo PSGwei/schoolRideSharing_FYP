@@ -2,10 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:school_ride_sharing/methods/common_methods.dart';
-import 'package:school_ride_sharing/models/carpool.dart';
+import 'package:school_ride_sharing/utilities/common_methods.dart';
+import 'package:school_ride_sharing/utilities/storage_method.dart';
 import 'package:uuid/uuid.dart';
-import 'package:school_ride_sharing/models/user.dart' as usermodel;
 
 const uuid = Uuid();
 
@@ -65,34 +64,24 @@ class _AddCarpoolState extends State<AddCarpool> {
         .doc(currentUser!.uid)
         .get();
 
-    final userInfo = usermodel.User(
-      uid: currentUser.uid,
-      userName: userData['username'],
-      avatar: null,
-      gender: '',
-      credit: 0,
+    // final userInfo = usermodel.User(
+    //   uid: currentUser.uid,
+    //   username: userData['username'],
+    //   // avatar: null,
+    //   gender: '',
+    //   credit: 0,
+    // );
+
+    final result = await StorageMethods().addCarpooltoFireStore(
+      from,
+      destination,
+      seat,
+      seat,
+      dateTimeCombined,
     );
 
-    try {
-      Carpool carpool = Carpool(
-        id: uuid.v4(),
-        user: userInfo,
-        pickUp: from,
-        destination: destination,
-        totalSeat: seat,
-        availableSeat: seat,
-        departureTime: dateTimeCombined,
-        participants: [],
-      );
-
-      Carpool.addCarpool(carpool);
-
-      if (!context.mounted) return;
-      CommonMethods.displaySnackbar('carpool successfully created', context);
-    } catch (error) {
-      if (!context.mounted) return;
-      CommonMethods.displaySnackbar(error.toString(), context);
-    }
+    if (!context.mounted) return;
+    displaySnackbar('carpool successfully created', context);
 
     if (!context.mounted) return;
     Navigator.pop(context);

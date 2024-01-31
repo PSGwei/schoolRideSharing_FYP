@@ -1,28 +1,36 @@
-import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class User {
   const User({
     required this.uid,
-    required this.userName,
+    required this.username,
     required this.avatar,
     required this.gender,
-    required this.credit,
+    this.credit = 0,
   });
 
   final String uid;
-  final String userName;
-  final File? avatar;
+  final String username;
+  final String avatar;
   final String gender;
   final int credit;
 
+  Map<String, dynamic> toJson() => {
+        "uid": uid,
+        "username": username,
+        "avatar": avatar,
+        "gender": gender,
+        "credit": credit,
+      };
+
   // convert map data to model
-  factory User.fromMap(Map<String, dynamic> map) {
+  static User toUserModel(DocumentSnapshot snapshot) {
     return User(
-      uid: map['uid'],
-      userName: map['username'],
-      avatar: null,
-      gender: map['gender'],
-      credit: map['credit'],
+      uid: snapshot['uid'],
+      username: snapshot['username'],
+      avatar: snapshot['avatar'],
+      gender: snapshot['gender'],
+      credit: snapshot['credit'],
     );
   }
 }

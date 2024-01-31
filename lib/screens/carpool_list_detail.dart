@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:school_ride_sharing/methods/common_methods.dart';
+import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
 
 // User? currentUser = CommonMethods.getCurrentUser();
@@ -18,16 +18,16 @@ class RequestDetail extends StatelessWidget {
   void onSendRequest(BuildContext context) async {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user!.uid != carpool.user.uid) {
+    if (user!.uid != carpool.uid) {
       try {
         await FirebaseFirestore.instance.collection('requests').add({
           'carpool_id': carpool.id,
-          'owner_id': carpool.user.uid,
+          'owner_id': carpool.uid,
           'requester_id': user.uid,
           'status': 'pending',
         });
         if (!context.mounted) return;
-        CommonMethods.displaySnackbar('request was sent', context);
+        displaySnackbar('request was sent', context);
       } catch (error) {}
     }
   }
@@ -48,10 +48,10 @@ class RequestDetail extends StatelessWidget {
                 ),
                 Column(
                   children: [
-                    Text(carpool.user.userName),
-                    Text(carpool.user.gender),
-                    Text(carpool.user.credit.toString()),
-                    Text('other information'),
+                    // Text(carpool.user.username),
+                    // Text(carpool.user.gender),
+                    // Text(carpool.user.credit.toString()),
+                    // Text('other information'),
                   ],
                 ),
               ],

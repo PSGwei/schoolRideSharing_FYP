@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:school_ride_sharing/methods/common_methods.dart';
 import 'package:school_ride_sharing/provider/user_id_provider.dart';
 import 'package:school_ride_sharing/provider/username_provider.dart';
+import 'package:school_ride_sharing/utilities/common_methods.dart';
 
 FirebaseFirestore firestore = FirebaseFirestore.instance;
 
@@ -38,10 +38,10 @@ class MyRequest extends ConsumerWidget {
 
         deleteRequest(requestId);
 
-        CommonMethods.displaySnackbar('Accepted Request', context);
+        displaySnackbar('Accepted Request', context);
       } else {
         if (!context.mounted) return;
-        CommonMethods.displaySnackbar('Document doesn\'t exist', context);
+        displaySnackbar('Document doesn\'t exist', context);
       }
     }
 

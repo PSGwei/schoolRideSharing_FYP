@@ -1,8 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:school_ride_sharing/methods/common_methods.dart';
-import 'package:school_ride_sharing/screens/authentication/auth_services.dart';
+import 'package:school_ride_sharing/utilities/authentication_method.dart';
+import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/screens/tabs.dart';
 import 'package:school_ride_sharing/widgets/decorations/square_tile.dart';
 
@@ -14,17 +15,18 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  AuthMethods authMethods = AuthMethods();
+
   final _form = GlobalKey<FormState>();
   bool hidePassword = true;
   bool _isLogin = true; // default is login page
 
-  String _enteredUsername = '';
-  String _enteredEmail = '';
-  String _enteredPassword = '';
+  String enteredUsername = '';
+  String enteredEmail = '';
+  String enteredPassword = '';
+  String gender = '';
 
   void _submit() async {
-    CommonMethods.checkConnectivity(context);
-
     final isValid = _form.currentState!.validate();
 
     if (!isValid) return;
@@ -32,60 +34,47 @@ class _AuthScreenState extends State<AuthScreen> {
     _form.currentState!.save();
 
     try {
+      // login
       if (_isLogin) {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: _enteredEmail, password: _enteredPassword);
+        final String result =
+            await authMethods.loginUser(enteredEmail, enteredPassword);
+        if (!context.mounted) return;
+        displaySnackbar(result, context);
       } else {
-        final userCredential = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(
-                email: _enteredEmail, password: _enteredPassword);
-
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .set({
-          'username': _enteredUsername,
-          'email': _enteredEmail,
-        });
+        // sign up
+        final String result = await authMethods.signUp(
+          email: enteredEmail,
+          password: enteredPassword,
+          username: enteredUsername,
+          gender: gender,
+          imageFile: 'assets/images/avatarman.png',
+        );
+        if (!context.mounted) return;
+        displaySnackbar(result, context);
       }
-      if (!context.mounted) return;
-      CommonMethods.displaySnackbar('Log in successfully', context);
+
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (context) => const TabsScreen()));
     } on FirebaseAuthException catch (error) {
       if (!context.mounted) return;
       if (error.code == 'wrong-password') {
-        CommonMethods.displaySnackbar('Wrong email or password', context);
+        displaySnackbar('Wrong email or password', context);
       }
 
-      CommonMethods.displaySnackbar(
-          error.message ?? 'Failed to sign up', context);
+      displaySnackbar(error.message ?? 'Failed to sign up', context);
     }
   }
 
   void googleSignIn() async {
-    final googleUser = await AuthServices().signInWithGoogle();
+    final result = await authMethods.signInWithGoogle();
 
     if (!context.mounted) return;
-
-    if (googleUser == null) {
-      CommonMethods.displaySnackbar('Failed to sign in with Google', context);
+    if (result == "Success") {
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => const TabsScreen()));
     }
 
-    final User? firebaseUser = FirebaseAuth.instance.currentUser;
-
-    if (firebaseUser == null) {
-      CommonMethods.displaySnackbar('Please try again later', context);
-      return;
-    }
-
-    CommonMethods.storeUserData({
-      'username': googleUser!.displayName,
-      'email': googleUser.email,
-    }, firebaseUser.uid);
-
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (context) => const TabsScreen()));
+    displaySnackbar('Failed to sign in with Google', context);
   }
 
   @override
@@ -138,18 +127,18 @@ class _AuthScreenState extends State<AuthScreen> {
                         if (value == null ||
                             value.isEmpty ||
                             value.trim().length < 5) {
-                          CommonMethods.displaySnackbar(
+                          displaySnackbar(
                               'username should be at least 5 characters',
                               context);
                         } else if (value.trim().length > 20) {
-                          CommonMethods.displaySnackbar(
+                          displaySnackbar(
                               'username should not exceed 20 characters',
                               context);
                         }
                         return null;
                       },
                       onSaved: (value) {
-                        _enteredUsername = value!.trim();
+                        enteredUsername = value!.trim();
                       },
                     ),
                   const SizedBox(height: 30),
@@ -162,13 +151,12 @@ class _AuthScreenState extends State<AuthScreen> {
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || !value.contains('@')) {
-                        CommonMethods.displaySnackbar(
-                            'email address invalid', context);
+                        displaySnackbar('email address invalid', context);
                       }
                       return null;
                     },
                     onSaved: (value) {
-                      _enteredEmail = value!.trim();
+                      enteredEmail = value!.trim();
                     },
                   ),
                   const SizedBox(height: 30),
@@ -191,14 +179,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     obscureText: hidePassword,
                     validator: (value) {
                       if (value == null || value.trim().length < 6) {
-                        CommonMethods.displaySnackbar(
+                        displaySnackbar(
                             'password should be at least 5 characters',
                             context);
                       }
                       return null;
                     },
                     onSaved: (value) {
-                      _enteredPassword = value!.trim();
+                      enteredPassword = value!.trim();
                     },
                   ),
 
@@ -246,7 +234,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           : const Text('Already have an account?'),
                       TextButton(
                         onPressed: () {
-                          //commonMethods.checkConnectivity(context);
+                          //checkConnectivity(context);
                           setState(() {
                             _isLogin = !_isLogin;
                           });
