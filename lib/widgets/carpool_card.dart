@@ -50,13 +50,32 @@ class CarpoolCard extends ConsumerWidget {
           Row(
             children: [
               const Icon(CupertinoIcons.smallcircle_fill_circle),
-              Text(carpool.pickUp),
+              Expanded(
+                child: Text(
+                  carpool.pickUp.humanReadableAddress,
+                  style: TextStyle(overflow: TextOverflow.ellipsis),
+                ),
+              ),
             ],
           ),
           Row(
             children: [
               const Icon(CupertinoIcons.location_solid),
-              Text(carpool.destination),
+              Expanded(
+                child: Text(
+                  carpool.destination.humanReadableAddress,
+                  style: TextStyle(overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                carpool.distance,
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
             ],
           ),
         ],

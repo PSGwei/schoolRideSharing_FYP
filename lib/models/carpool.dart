@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:school_ride_sharing/models/address.dart';
 
 class Carpool {
   Carpool({
@@ -7,6 +8,7 @@ class Carpool {
     required this.uid,
     required this.pickUp,
     required this.destination,
+    required this.distance,
     required this.totalSeat,
     required this.availableSeat,
     required this.departureTime,
@@ -15,8 +17,9 @@ class Carpool {
 
   final String id;
   final String uid;
-  final String pickUp;
-  final String destination;
+  final Address pickUp;
+  final Address destination;
+  final String distance;
   final int totalSeat;
   final int availableSeat;
   final DateTime departureTime;
@@ -31,7 +34,7 @@ class Carpool {
   }
 
   static Carpool toCarpoolModel(Map<String, dynamic> snapshot) {
-    Timestamp timestamp = snapshot['departure_time'];
+    Timestamp timestamp = snapshot['departureTime'];
 
     // convert array to List<String>
     List<String> participants = List<String>.from(snapshot['participants']);
@@ -39,10 +42,11 @@ class Carpool {
     return Carpool(
       id: snapshot['id'],
       uid: snapshot['uid'],
-      pickUp: snapshot['from'],
-      destination: snapshot['to'],
-      totalSeat: snapshot['total_seat'],
-      availableSeat: snapshot['available_seat'],
+      pickUp: Address.toAddressModel(snapshot['pickUp']),
+      destination: Address.toAddressModel(snapshot['destination']),
+      distance: snapshot['distance'],
+      totalSeat: snapshot['totalSeat'],
+      availableSeat: snapshot['availableSeat'],
       departureTime: timestamp.toDate(),
       participants: participants,
     );
@@ -51,8 +55,9 @@ class Carpool {
   Map<String, dynamic> toJson() => {
         "id": id,
         "uid": uid,
-        "pickUp": pickUp,
-        "destination": destination,
+        "pickUp": pickUp.toJson(),
+        "destination": destination.toJson(),
+        "distance": distance,
         "totalSeat": totalSeat,
         "availableSeat": availableSeat,
         "departureTime": departureTime,

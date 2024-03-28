@@ -1,15 +1,21 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:school_ride_sharing/screens/authentication.dart';
+import 'package:school_ride_sharing/screens/search_destination_page.dart';
 import 'package:school_ride_sharing/screens/tabs.dart';
+import 'package:school_ride_sharing/screens/testing.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await Permission.locationWhenInUse.isDenied.then((isDenied) {
+    if (isDenied) {
+      Permission.locationWhenInUse.request();
+    }
+  });
   // FirebaseAuth.instance.authStateChanges().listen((User? user) async {
   //   if (user != null) {
   //     var userDoc = await FirebaseFirestore.instance
@@ -50,6 +56,8 @@ class MyApp extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return TabsScreen();
+            // return Testing();
+            // return SearchDestinationPage();
           }
           return AuthScreen();
         },

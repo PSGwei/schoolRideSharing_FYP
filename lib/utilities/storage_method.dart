@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:school_ride_sharing/models/address.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
+import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/utilities/global_variables.dart';
 import 'package:path/path.dart' as path;
 
@@ -51,8 +53,8 @@ class StorageMethods {
   }
 
   Future<String> addCarpooltoFireStore(
-    String destination,
-    String pickUp,
+    Address destination,
+    Address pickUp,
     int totalSeat,
     int availableSeat,
     DateTime departureTime,
@@ -60,11 +62,15 @@ class StorageMethods {
     String carpoolID = uuid.v4();
     String result = 'Something went wrong';
 
+    final String distance =
+        await searchLocation(pickUp.placeID, destination.placeID);
+
     Carpool carpool = Carpool(
       id: carpoolID,
       uid: userAuth.currentUser!.uid,
       pickUp: pickUp,
       destination: destination,
+      distance: distance != 'Error' ? distance : '',
       totalSeat: totalSeat,
       availableSeat: availableSeat,
       departureTime: departureTime,

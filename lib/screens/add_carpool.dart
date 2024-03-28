@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:school_ride_sharing/models/address.dart';
+import 'package:school_ride_sharing/screens/homescreen.dart';
 import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/utilities/storage_method.dart';
 import 'package:uuid/uuid.dart';
@@ -9,7 +11,14 @@ import 'package:uuid/uuid.dart';
 const uuid = Uuid();
 
 class AddCarpool extends StatefulWidget {
-  const AddCarpool({super.key});
+  final Address pickUpLocation;
+  final Address dropOffLocation;
+
+  const AddCarpool({
+    super.key,
+    required this.pickUpLocation,
+    required this.dropOffLocation,
+  });
 
   @override
   State<AddCarpool> createState() => _AddCarpoolState();
@@ -18,8 +27,6 @@ class AddCarpool extends StatefulWidget {
 class _AddCarpoolState extends State<AddCarpool> {
   final _form = GlobalKey<FormState>();
 
-  String from = '';
-  String destination = '';
   DateTime date = DateTime.now();
   TimeOfDay time = TimeOfDay.now();
   int seat = 4;
@@ -73,8 +80,8 @@ class _AddCarpoolState extends State<AddCarpool> {
     // );
 
     final result = await StorageMethods().addCarpooltoFireStore(
-      from,
-      destination,
+      widget.pickUpLocation,
+      widget.dropOffLocation,
       seat,
       seat,
       dateTimeCombined,
@@ -83,7 +90,11 @@ class _AddCarpoolState extends State<AddCarpool> {
     if (!context.mounted) return;
     displaySnackbar('carpool successfully created', context);
 
-    if (!context.mounted) return;
+    // if (!context.mounted) return;
+    //error
+    // Navigator.of(context).pushReplacement(MaterialPageRoute(
+    //     builder: (context) => HomeScreen(isMyCarpoolPage: false)));
+
     Navigator.pop(context);
   }
 
@@ -101,16 +112,20 @@ class _AddCarpoolState extends State<AddCarpool> {
             child: Column(
               children: [
                 TextFormField(
+                  initialValue: widget.pickUpLocation.humanReadableAddress,
+                  readOnly: true,
                   decoration: const InputDecoration(label: Text('From')),
-                  onSaved: (value) {
-                    from = value!;
-                  },
+                  // onSaved: (value) {
+                  //   from = value!;
+                  // },
                 ),
                 TextFormField(
+                  initialValue: widget.dropOffLocation.humanReadableAddress,
+                  readOnly: true,
                   decoration: const InputDecoration(label: Text('To')),
-                  onSaved: (value) {
-                    destination = value!;
-                  },
+                  // onSaved: (value) {
+                  //   destination = value!;
+                  // },
                 ),
                 // Date
                 TextFormField(

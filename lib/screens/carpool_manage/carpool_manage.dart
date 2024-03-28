@@ -30,7 +30,7 @@ class _CarpoolManageScreenState extends State<CarpoolManageScreen> {
             Expanded(
               child: TabBarView(
                 children: [
-                  CarpoolsScreen(isMyCarpoolPage: true),
+                  HomeScreen(isMyCarpoolPage: true),
                   MyRequest(),
                 ],
               ),

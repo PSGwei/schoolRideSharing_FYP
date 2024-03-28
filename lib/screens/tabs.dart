@@ -5,6 +5,7 @@ import 'package:school_ride_sharing/screens/carpool_manage/carpool_manage.dart';
 import 'package:school_ride_sharing/screens/homescreen.dart';
 import 'package:school_ride_sharing/screens/friend_list.dart';
 import 'package:school_ride_sharing/screens/profile.dart';
+import 'package:school_ride_sharing/screens/search_destination_page.dart';
 
 class TabsScreen extends StatefulWidget {
   const TabsScreen({super.key});
@@ -24,7 +25,8 @@ class _TabsScreenState extends State<TabsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Widget activeScreen = const CarpoolsScreen(
+    // default home screen
+    Widget activeScreen = const HomeScreen(
       isMyCarpoolPage: false,
     );
     String activeTitle = 'Home';
@@ -35,8 +37,8 @@ class _TabsScreenState extends State<TabsScreen> {
       actions: [
         IconButton(
             onPressed: () {
-              Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const AddCarpool()));
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const SearchDestinationPage()));
             },
             icon: const Icon(Icons.add))
       ],

@@ -1,10 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
+import 'package:school_ride_sharing/screens/carpool_list_detail.dart';
+import 'package:school_ride_sharing/screens/carpool_manage/carpool_detail.dart';
+import 'package:school_ride_sharing/screens/carpool_manage/my_request.dart';
+import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/widgets/carpool_card.dart';
 
-class CarpoolsScreen extends StatelessWidget {
-  const CarpoolsScreen({
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({
     super.key,
     required this.isMyCarpoolPage,
   });
@@ -12,9 +19,38 @@ class CarpoolsScreen extends StatelessWidget {
   final bool isMyCarpoolPage;
 
   @override
-  Widget build(BuildContext context) {
-    List<Carpool> carpoolList;
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  Position? currentPositionOfUser;
+  List<Carpool> carpoolList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentLiveLocationOfUser();
+  }
+
+  void getCurrentLiveLocationOfUser() async {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.bestForNavigation);
+    if (!context.mounted) return;
+    currentPositionOfUser = position;
+    await reverseGeoCoding(position, ref);
+  }
+
+  void removeItem(Carpool carpool) async {
+    setState(() {
+      carpoolList.remove(carpool);
+    });
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    firestore.collection('carpools').doc(carpool.id).delete();
+    displaySnackbar('Carpool deleted sucessfully', context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return StreamBuilder(
         stream: FirebaseFirestore.instance.collection('carpools').snapshots(),
         builder: (context, snapshot) {
@@ -36,48 +72,50 @@ class CarpoolsScreen extends StatelessWidget {
             );
           }
 
+          final user = FirebaseAuth.instance.currentUser;
+
           Iterable<Carpool> carpools = snapshot.data!.docs.map((document) {
             Map<String, dynamic> data = document.data();
             return Carpool.toCarpoolModel(data);
           });
 
-          carpoolList = carpools.toList();
-/*
-          if (isMyCarpoolPage) {
-            carpoolList = carpools
-                .where((carpool) => carpool.user.uid == user!.uid)
-                .toList();
+          if (widget.isMyCarpoolPage) {
+            carpoolList =
+                carpools.where((carpool) => carpool.uid == user!.uid).toList();
           } else {
             carpoolList = carpools.toList();
           }
 
-          if (snapshot.) {
+          if (carpoolList.isEmpty) {
             return const Center(
               child: Text('Empty'),
             );
           }
-          */
-
-// InkWell(
-//               onTap: () {
-//                 Navigator.of(context).push(
-//                   MaterialPageRoute(
-//                     builder: (context) => isMyCarpoolPage
-//                         ? CarpoolDetail(
-//                             carpoolId: carpoolList[index].id,
-//                           )
-//                         : RequestDetail(
-//                             carpool: carpoolList[index],
-//                           ),
-//                   ),
-//                 );
-//               },
-//             ),
 
           return ListView.builder(
             itemCount: carpoolList.length,
-            itemBuilder: (context, index) =>
-                CarpoolCard(carpool: carpoolList[index]),
+            itemBuilder: (context, index) => InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => widget.isMyCarpoolPage
+                        ? CarpoolDetail(
+                            carpoolId: carpoolList[index].id,
+                          )
+                        : RequestDetail(
+                            carpool: carpoolList[index],
+                          ),
+                  ),
+                );
+              },
+              child: Dismissible(
+                key: ValueKey(carpoolList[index].id),
+                onDismissed: (direction) {
+                  removeItem(carpoolList[index]);
+                },
+                child: CarpoolCard(carpool: carpoolList[index]),
+              ),
+            ),
           );
         });
   }

@@ -1,5 +1,13 @@
+import 'dart:convert';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart';
+import 'package:school_ride_sharing/models/address.dart';
+import 'package:school_ride_sharing/provider/address_provider.dart';
+import 'package:school_ride_sharing/utilities/global_variables.dart';
 
 checkConnectivity(BuildContext context) async {
   var connectionResult = await Connectivity().checkConnectivity();
@@ -18,14 +26,59 @@ void displaySnackbar(String message, BuildContext context) {
   ScaffoldMessenger.of(context).showSnackBar(snackBar);
 }
 
-  // static storeUserData(Map<String, dynamic> data, String uid) async {
-  //   await FirebaseFirestore.instance.collection('users').doc(uid).set({
-  //     'username': data['username'],
-  //     'email': data['email'],
-  //   });
-  // }
+sendRequestToAPI(String apiURL) async {
+  try {
+    Response response = await get(Uri.parse(apiURL));
+    if (response.statusCode == 200) {
+      String result = response.body;
+      var decodedResult = jsonDecode(result);
+      return decodedResult;
+    }
+  } catch (error) {
+    return 'error';
+  }
+}
 
-  // static User? getCurrentUser() {
-  //   return FirebaseAuth.instance.currentUser;
-  // }
+Future<String> reverseGeoCoding(Position position, WidgetRef ref) async {
+  String result = 'Something went wrong';
+  String apiURL =
+      'https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$googleMapKey';
 
+  final response = await sendRequestToAPI(apiURL);
+
+  if (response != 'error') {
+    String humanReadableAddress = response['results'][0]['formatted_address'];
+    String placeID = response['results'][0]['place_id'];
+
+    Address pickUpAddress = Address(
+      placeID: placeID,
+      placeName: '',
+      humanReadableAddress: humanReadableAddress,
+      latitude: position.latitude.toString(),
+      longitude: position.longitude.toString(),
+    );
+    ref
+        .read(pickUpLocationProvider.notifier)
+        .updatePickUpLocation(pickUpAddress);
+    result = 'Success';
+  }
+  return result;
+}
+
+searchLocation(String originPlaceID, String destinationPlaceID) async {
+  String result = 'Error';
+  String distanceAPIUrl =
+      "https://maps.googleapis.com/maps/api/distancematrix/json?destinations=place_id:$destinationPlaceID&origins=place_id:$originPlaceID&key=$googleMapKey";
+  final response = await sendRequestToAPI(distanceAPIUrl);
+  if (response != 'error') {
+    if (response["status"] == 'OK') {
+      final elements = response['rows'][0]['elements'];
+      if (elements[0]["status"] == 'OK') {
+        final distanceText = elements[0]['distance']['text'];
+        return distanceText;
+      }
+    }
+  } else {
+    return result;
+  }
+}
