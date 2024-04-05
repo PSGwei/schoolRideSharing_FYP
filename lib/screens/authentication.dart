@@ -26,6 +26,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   void _submit() async {
     final isValid = _form.currentState!.validate();
+    final String result;
 
     if (!isValid) return;
 
@@ -34,32 +35,31 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       // login
       if (_isLogin) {
-        final String result =
-            await authMethods.loginUser(enteredEmail, enteredPassword);
-        if (!context.mounted) return;
-        displaySnackbar(result, context);
+        result = await authMethods.loginUser(enteredEmail, enteredPassword);
       } else {
         // sign up
-        final String result = await authMethods.signUp(
+        result = await authMethods.signUp(
           email: enteredEmail,
           password: enteredPassword,
           username: enteredUsername,
           gender: gender,
           imageFile: 'assets/images/avatarman.png',
         );
-        if (!context.mounted) return;
-        displaySnackbar(result, context);
       }
+      if (!context.mounted) return;
+      displaySnackbar(result, context);
 
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const TabsScreen()));
+      if (result == 'Success') {
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const TabsScreen()));
+      }
     } on FirebaseAuthException catch (error) {
       if (!context.mounted) return;
       if (error.code == 'wrong-password') {
         displaySnackbar('Wrong email or password', context);
       }
 
-      displaySnackbar(error.message ?? 'Failed to sign up', context);
+      // displaySnackbar(error.message ?? 'Failed to sign up', context);
     }
   }
 

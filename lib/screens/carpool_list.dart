@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
-import 'package:school_ride_sharing/screens/carpool_list_detail.dart';
+import 'package:school_ride_sharing/provider/current_user_provider.dart';
+import 'package:school_ride_sharing/screens/request_detail.dart';
 import 'package:school_ride_sharing/screens/carpool_manage/carpool_detail.dart';
-import 'package:school_ride_sharing/screens/carpool_manage/my_request.dart';
 import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/widgets/carpool_card.dart';
 
@@ -25,6 +25,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   Position? currentPositionOfUser;
   List<Carpool> carpoolList = [];
+  bool isLoadingPosition = true;
 
   @override
   void initState() {
@@ -33,11 +34,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void getCurrentLiveLocationOfUser() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled; prompt the user to enable them.
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, prompt the user to allow permissions from the app settings.
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are permanently denied, prompt the user to enable them in the app settings.
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.bestForNavigation);
-    if (!context.mounted) return;
-    currentPositionOfUser = position;
+
+    ref.read(currentLocationProvider.notifier).updateCurrentLocation(position);
     await reverseGeoCoding(position, ref);
+
+    setState(() {
+      currentPositionOfUser = position; // Update position
+      isLoadingPosition = false; // End loading
+    });
   }
 
   void removeItem(Carpool carpool) async {
@@ -54,7 +85,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return StreamBuilder(
         stream: FirebaseFirestore.instance.collection('carpools').snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting ||
+              isLoadingPosition) {
             return const Center(
               child: CircularProgressIndicator(),
             );
@@ -100,7 +132,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   MaterialPageRoute(
                     builder: (context) => widget.isMyCarpoolPage
                         ? CarpoolDetail(
-                            carpoolId: carpoolList[index].id,
+                            carpool: carpoolList[index],
                           )
                         : RequestDetail(
                             carpool: carpoolList[index],

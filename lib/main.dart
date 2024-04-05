@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:school_ride_sharing/screens/authentication.dart';
+import 'package:school_ride_sharing/screens/carpool_list.dart';
 import 'package:school_ride_sharing/screens/search_destination_page.dart';
 import 'package:school_ride_sharing/screens/tabs.dart';
 import 'package:school_ride_sharing/screens/testing.dart';
+import 'package:school_ride_sharing/screens/testing2.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp();
   await Permission.locationWhenInUse.isDenied.then((isDenied) {
     if (isDenied) {
@@ -56,7 +59,7 @@ class MyApp extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return TabsScreen();
-            // return Testing();
+            // return Testing2();
             // return SearchDestinationPage();
           }
           return AuthScreen();

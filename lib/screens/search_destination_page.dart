@@ -10,7 +10,12 @@ import 'package:school_ride_sharing/utilities/global_variables.dart';
 import 'package:school_ride_sharing/widgets/prediction_places_ui.dart';
 
 class SearchDestinationPage extends ConsumerStatefulWidget {
-  const SearchDestinationPage({super.key});
+  const SearchDestinationPage({
+    super.key,
+    required this.isOffer,
+  });
+
+  final bool isOffer;
 
   @override
   ConsumerState<SearchDestinationPage> createState() =>

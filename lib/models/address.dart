@@ -30,4 +30,14 @@ class Address {
       placeName: snapshot['placeName'],
     );
   }
+
+  static Address emptyAddress() {
+    return Address(
+      humanReadableAddress: '',
+      longitude: '',
+      latitude: '',
+      placeID: '',
+      placeName: '',
+    );
+  }
 }

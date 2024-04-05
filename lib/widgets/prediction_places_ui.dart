@@ -27,9 +27,9 @@ class _PredictionPlacesUIState extends ConsumerState<PredictionPlacesUI> {
         "https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=$googleMapKey";
 
     showDialog(
-        context: context,
-        builder: (context) =>
-            LoadingDialog(messageText: 'Getting details....'));
+      context: context,
+      builder: (context) => LoadingDialog(messageText: 'Getting details....'),
+    );
 
     final response = await sendRequestToAPI(placeDetailsAPIUrl);
 

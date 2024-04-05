@@ -7,7 +7,7 @@ const Uuid uuid = Uuid();
 
 const String googleMapKey = 'AIzaSyAmmCIkD5pjX_2Igrn7IfNdteJY0InaSiM';
 
-const CameraPosition googlePlexInitial = CameraPosition(
-  target: LatLng(37.42796133580664, -122.085749655962),
+const CameraPosition malaysiaPosition = CameraPosition(
+  target: LatLng(3.140853, 101.693207),
   zoom: 14.4746,
 );

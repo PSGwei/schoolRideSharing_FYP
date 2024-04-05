@@ -37,6 +37,7 @@ class AuthMethods {
           .collection('users')
           .doc(firebaseAuth.currentUser!.uid)
           .set(user.toJson());
+      result = 'Success';
     } on FirebaseAuthException catch (error) {
       if (error.code == 'weak-password') {
         result = 'Error: Password length should more than 5 characters';
@@ -47,7 +48,6 @@ class AuthMethods {
       result = error.toString();
     }
 
-    result = 'success';
     return result;
   }
 
@@ -104,5 +104,16 @@ class AuthMethods {
         .doc(uid ?? FirebaseAuth.instance.currentUser!.uid)
         .get();
     return models.User.toUserModel(user);
+  }
+
+  Future<List<models.User>> getUserDetails2(List<String> uids) async {
+    List<models.User> usersDetails = [];
+    for (String uid in uids) {
+      DocumentSnapshot userSnapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      models.User user = models.User.toUserModel(userSnapshot);
+      usersDetails.add(user);
+    }
+    return usersDetails;
   }
 }

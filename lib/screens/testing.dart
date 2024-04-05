@@ -41,7 +41,7 @@ class _TestingState extends ConsumerState<Testing> {
     return GoogleMap(
       mapType: MapType.normal,
       myLocationEnabled: true,
-      initialCameraPosition: googlePlexInitial,
+      initialCameraPosition: malaysiaPosition,
       onMapCreated: (GoogleMapController mapController) {
         controllerGoogleMap = mapController;
         // googleMapCompleterController.complete(controllerGoogleMap);

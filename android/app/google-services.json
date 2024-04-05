@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "752414933450",
+    "firebase_url": "https://school-ride-sharing-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "school-ride-sharing",
     "storage_bucket": "school-ride-sharing.appspot.com"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.wjw.school_ride_sharing"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "752414933450-2lp9ivpihbj4gnlbde1aonlrhob8bbvg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wjw.school_ride_sharing",
+            "certificate_hash": "77eb88e57ea2f0cda559ab1a7f24fd2828ca57ea"
+          }
+        },
+        {
+          "client_id": "752414933450-u5uos2arniget99t9cumlkgkf97j2kf8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDYXU7aZfyg0c8xvrS2gZ1vHm9tIyphYAQ"
@@ -20,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "752414933450-u5uos2arniget99t9cumlkgkf97j2kf8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

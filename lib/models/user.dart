@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:school_ride_sharing/models/address.dart';
 
 class User {
   const User({
@@ -6,6 +7,7 @@ class User {
     required this.username,
     required this.avatar,
     required this.gender,
+    this.defaultAddress,
     this.credit = 0,
   });
 
@@ -13,6 +15,7 @@ class User {
   final String username;
   final String avatar;
   final String gender;
+  final Address? defaultAddress;
   final int credit;
 
   Map<String, dynamic> toJson() => {
@@ -21,6 +24,8 @@ class User {
         "avatar": avatar,
         "gender": gender,
         "credit": credit,
+        "default_address":
+            defaultAddress?.toJson() ?? Address.emptyAddress().toJson(),
       };
 
   // convert map data to model
@@ -30,6 +35,9 @@ class User {
       username: snapshot['username'],
       avatar: snapshot['avatar'],
       gender: snapshot['gender'],
+      defaultAddress: (snapshot['default_address'] as Map).isNotEmpty
+          ? Address.toAddressModel(snapshot['default_address'])
+          : null,
       credit: snapshot['credit'],
     );
   }

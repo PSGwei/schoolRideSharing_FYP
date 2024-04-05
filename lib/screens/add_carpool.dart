@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:school_ride_sharing/models/address.dart';
-import 'package:school_ride_sharing/screens/homescreen.dart';
+import 'package:school_ride_sharing/screens/carpool_list.dart';
 import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/utilities/storage_method.dart';
 import 'package:uuid/uuid.dart';
@@ -80,22 +80,18 @@ class _AddCarpoolState extends State<AddCarpool> {
     // );
 
     final result = await StorageMethods().addCarpooltoFireStore(
-      widget.pickUpLocation,
       widget.dropOffLocation,
+      widget.pickUpLocation,
       seat,
       seat,
       dateTimeCombined,
     );
 
     if (!context.mounted) return;
+
     displaySnackbar('carpool successfully created', context);
 
-    // if (!context.mounted) return;
-    //error
-    // Navigator.of(context).pushReplacement(MaterialPageRoute(
-    //     builder: (context) => HomeScreen(isMyCarpoolPage: false)));
-
-    Navigator.pop(context);
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
