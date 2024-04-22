@@ -4,6 +4,7 @@ import 'package:school_ride_sharing/models/carpool.dart';
 import 'package:school_ride_sharing/models/user.dart' as models;
 import 'package:school_ride_sharing/provider/current_user_provider.dart';
 import 'package:school_ride_sharing/widgets/map.dart';
+import 'package:school_ride_sharing/widgets/map2.dart';
 
 class CarpoolParticipantCard extends ConsumerStatefulWidget {
   const CarpoolParticipantCard({
@@ -109,9 +110,11 @@ class _CarpoolParticipantCardState
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => MapDisplay(
+                        builder: (context) => MapDisplay2(
                           carpool: widget.carpool,
+                          passengers: widget.participants,
                         ),
+                        // MapTesting(),
                       ),
                     );
                   },

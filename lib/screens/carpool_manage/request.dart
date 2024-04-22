@@ -27,13 +27,16 @@ class MyRequest extends ConsumerWidget {
           .get();
 
       if (carpool.docs.isNotEmpty) {
-        // update the participants data
+        // update the participants and available seat data
         List<String> participants =
             List<String>.from(carpool.docs[0].get('participants'));
         participants.add(requesterId);
 
+        int availableSeats = carpool.docs[0].get('availableSeat') - 1;
+
         await carpool.docs[0].reference.update({
           'participants': participants,
+          'availableSeat': availableSeats,
         });
 
         deleteRequest(requestId);

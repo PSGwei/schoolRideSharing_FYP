@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
+import 'package:school_ride_sharing/screens/testing2.dart';
 import 'package:school_ride_sharing/utilities/global_variables.dart';
 import 'package:school_ride_sharing/models/user.dart' as models;
 import 'package:school_ride_sharing/widgets/loading_indicator.dart';
@@ -16,18 +17,18 @@ import 'package:http/http.dart' as http;
 
 StreamSubscription<Position>? positionStreamHomePage;
 
-class MapDisplay extends ConsumerStatefulWidget {
-  const MapDisplay(
+class MapDisplay2 extends ConsumerStatefulWidget {
+  const MapDisplay2(
       {super.key, required this.carpool, required this.passengers});
 
   final Carpool carpool;
   final List<models.User> passengers;
 
   @override
-  ConsumerState<MapDisplay> createState() => _MapDisplayState();
+  ConsumerState<MapDisplay2> createState() => _MapDisplayState();
 }
 
-class _MapDisplayState extends ConsumerState<MapDisplay> {
+class _MapDisplayState extends ConsumerState<MapDisplay2> {
   GoogleMapController? controllerGoogleMap;
   Position? driverCurrentPosition;
   LatLng? driverCurrentLatLng;
@@ -37,9 +38,8 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
   List<LatLng> routeCoordinates = [];
 
   List<models.User> passengers = [];
-  int currentPassengerIndex = 0;
-  double currentPassengerLatitude = 0.0;
-  double currentPassengerLongitude = 0.0;
+  int currentDestinationIndex = 0;
+
   bool isCurrentRouteComplete = false;
   bool isAllPsgCompleted = false;
   bool isRouteLoading = false;
@@ -47,20 +47,30 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
   late LatLng targetDestination;
   late LatLng carpoolDestination;
 
+  List<LatLng> destionationList = [];
+
   @override
   void initState() {
     super.initState();
     passengers = widget.passengers;
 
-    currentPassengerLatitude = double.parse(
-        passengers[currentPassengerIndex].defaultAddress!.latitude);
-    currentPassengerLongitude = double.parse(
-        passengers[currentPassengerIndex].defaultAddress!.longitude);
+    // currentPassengerLatitude = double.parse(
+    //     passengers[currentPassengerIndex].defaultAddress!.latitude);
+    // currentPassengerLongitude = double.parse(
+    //     passengers[currentPassengerIndex].defaultAddress!.longitude);
 
     carpoolDestination = LatLng(
       double.parse(widget.carpool.destination.latitude),
       double.parse(widget.carpool.destination.longitude),
     );
+
+    for (var i in passengers) {
+      destionationList.add(LatLng(
+        double.parse(i.defaultAddress!.latitude),
+        double.parse(i.defaultAddress!.longitude),
+      ));
+    }
+    destionationList.add(carpoolDestination);
 
     initializeDriverLocation().then((_) {
       setState(() {
@@ -139,7 +149,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
                             controller: controller,
                             itemCount: widget.carpool.participants.length,
                             itemBuilder: (context, index) => TrackingDashbaord(
-                              onGoingIndex: currentPassengerIndex,
+                              onGoingIndex: currentDestinationIndex,
                               index: index,
                               isCurrentRouteComplete: isCurrentRouteComplete,
                               passenger: passengers[index],
@@ -180,8 +190,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
             driverCurrentPosition!.longitude,
           );
 
-          await checkProximityToDestination(
-              driverCurrentLatLng!, isAllPsgCompleted);
+          await checkProximityToDestination(driverCurrentLatLng!);
 
           // update map camera to current position
           CameraPosition cameraPosition =
@@ -195,51 +204,41 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
     }
   }
 
-  Future<void> checkProximityToDestination(
-      LatLng currentPosition, bool isAllPsgCompleted) async {
-    if (isAllPsgCompleted) {
-      targetDestination = carpoolDestination;
-    } else if (currentPassengerIndex < passengers.length) {
-      LatLng targetDestination = LatLng(
-        currentPassengerLatitude,
-        currentPassengerLongitude,
-      );
+  Future<void> checkProximityToDestination(LatLng driverCurrentLocation) async {
+    if (currentDestinationIndex < passengers.length) {
+      LatLng targetDestination = destionationList[currentDestinationIndex];
 
       double distance = Geolocator.distanceBetween(
-        currentPosition.latitude,
-        currentPosition.longitude,
+        driverCurrentLocation.latitude,
+        driverCurrentLocation.longitude,
         targetDestination.latitude,
         targetDestination.longitude,
       );
 
+      // print(
+      //     'currentDestinationIndex in checkProximity: $currentDestinationIndex');
+      // print('targetDestination in checkProximity: $targetDestination');
+
       if (distance <= 50.0) {
-        if (!isAllPsgCompleted) {
-          // 100 meters proximity threshold
-          currentPassengerIndex++;
-          await navigateToNextPassenger();
-        } else {
-          await navigateToSchool();
-        }
+        // 100 meters proximity threshold
+        currentDestinationIndex++;
+        await navigateToNextPassenger();
       }
     }
   }
 
   Future<void> navigateToNextPassenger() async {
-    if (currentPassengerIndex < passengers.length) {
+    if (currentDestinationIndex < destionationList.length) {
       // if (!context.mounted) return;
-      // showCustomDialog(context,
-      //     "You have reached your destination. Preparing the next route.");
+      showCustomDialog(context,
+          "You have reached your destination. Preparing the next route.");
+      if (currentDestinationIndex == destionationList.length - 1) {
+        // if (!context.mounted) return;
+        showCustomDialog(
+            context, 'All kids fetched completed. Going to School....');
+      }
 
-      currentPassengerLatitude = double.parse(
-          passengers[currentPassengerIndex].defaultAddress!.latitude);
-      currentPassengerLongitude = double.parse(
-          passengers[currentPassengerIndex].defaultAddress!.longitude);
-
-      LatLng targetDestination = LatLng(
-        currentPassengerLatitude,
-        currentPassengerLongitude,
-      );
-
+      LatLng targetDestination = destionationList[currentDestinationIndex];
       setState(() {
         isRouteLoading = true; // Start showing the loading indicator
       });
@@ -250,28 +249,22 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
         isRouteLoading = false; // Start showing the loading indicator
       });
     } else {
-      if (!context.mounted) return;
-      showCustomDialog(
-          context, 'All kids fetched completed. Going to School....');
-      setState(() {
-        isAllPsgCompleted = true;
-      });
+      // await onAllRoutesCompleted();
+      Navigator.of(context)
+          .pushReplacement(MaterialPageRoute(builder: (context) => MyWidget()));
     }
   }
 
-  Future<void> navigateToSchool() async {
-    LatLng targetDestination = carpoolDestination;
-    setState(() {
-      isRouteLoading = true; // Start showing the loading indicator
-    });
-    await updateRoute(driverCurrentLatLng!, targetDestination);
+  Future<void> onAllRoutesCompleted() async {
+    // Show completion dialog
+    if (!context.mounted) return;
+    showCustomDialog(context, 'All routes completed. Ending the ride.');
 
-    setState(() {
-      isRouteLoading = false; // Start showing the loading indicator
-    });
+    // Cancel the position listener
+    await positionStreamHomePage?.cancel();
+    positionStreamHomePage = null;
 
-    // await positionStreamHomePage!.cancel();
-    // positionStreamHomePage = null;
+    // Optionally, navigate to another screen or perform other cleanup
   }
 
   Future<void> updateRoute(LatLng start, LatLng destination) async {
@@ -300,7 +293,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
     }
 
     // Add new polyline
-    PolylineId id = PolylineId('route${currentPassengerIndex}');
+    PolylineId id = PolylineId('route${destination.hashCode}');
     Polyline polyline = Polyline(
       polylineId: id,
       color: Colors.green,
@@ -321,7 +314,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
       googleMapKey,
       PointLatLng(
           driverCurrentLatLng!.latitude, driverCurrentLatLng!.longitude),
-      PointLatLng(currentPassengerLatitude, currentPassengerLongitude),
+      PointLatLng(destionationList[0].latitude, destionationList[0].longitude),
       travelMode: TravelMode.driving,
     );
 

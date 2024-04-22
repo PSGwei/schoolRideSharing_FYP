@@ -9,6 +9,7 @@ import 'package:school_ride_sharing/screens/request_detail.dart';
 import 'package:school_ride_sharing/screens/carpool_manage/carpool_detail.dart';
 import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/widgets/carpool_card.dart';
+import 'package:school_ride_sharing/widgets/loading_indicator.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({
@@ -25,15 +26,15 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   Position? currentPositionOfUser;
   List<Carpool> carpoolList = [];
-  bool isLoadingPosition = true;
+  bool isLoadingPosition = false;
 
   @override
   void initState() {
     super.initState();
-    getCurrentLiveLocationOfUser();
+    getCurrentLocationOfUser();
   }
 
-  void getCurrentLiveLocationOfUser() async {
+  void getCurrentLocationOfUser() async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -58,6 +59,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return Future.error(
           'Location permissions are permanently denied, we cannot request permissions.');
     }
+
+    // dont set at above getting permission
+    setState(() {
+      isLoadingPosition = true;
+    });
 
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.bestForNavigation);
@@ -85,10 +91,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return StreamBuilder(
         stream: FirebaseFirestore.instance.collection('carpools').snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting ||
-              isLoadingPosition) {
-            return const Center(
-              child: CircularProgressIndicator(),
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const LoadingIndicator(
+              message: 'Getting the data...',
+            );
+          }
+
+          if (isLoadingPosition) {
+            const LoadingIndicator(
+              message: 'Getting the location...',
             );
           }
 
