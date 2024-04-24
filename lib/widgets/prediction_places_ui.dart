@@ -53,9 +53,6 @@ class _PredictionPlacesUIState extends ConsumerState<PredictionPlacesUI> {
             .updateDropOffLocation(dropOffLocation);
 
         widget.onSelectPlace(dropOffLocation);
-
-        // Navigator.of(context).pushReplacement(
-        //     MaterialPageRoute(builder: (context) => AddCarpool()));
       }
     }
   }
@@ -64,7 +61,7 @@ class _PredictionPlacesUIState extends ConsumerState<PredictionPlacesUI> {
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-        fetchPlaceDetails(widget.predictionPlaces!.placeId.toString());
+        fetchPlaceDetails(widget.predictionPlaces.placeId.toString());
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
@@ -87,7 +84,7 @@ class _PredictionPlacesUIState extends ConsumerState<PredictionPlacesUI> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        widget.predictionPlaces!.mainText.toString(),
+                        widget.predictionPlaces.mainText.toString(),
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 16,
@@ -96,7 +93,7 @@ class _PredictionPlacesUIState extends ConsumerState<PredictionPlacesUI> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        widget.predictionPlaces!.secondaryText.toString(),
+                        widget.predictionPlaces.secondaryText.toString(),
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 12,

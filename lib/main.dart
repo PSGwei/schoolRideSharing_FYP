@@ -4,11 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:school_ride_sharing/screens/authentication.dart';
-import 'package:school_ride_sharing/screens/carpool_list.dart';
-import 'package:school_ride_sharing/screens/search_destination_page.dart';
 import 'package:school_ride_sharing/screens/tabs.dart';
-import 'package:school_ride_sharing/screens/testing.dart';
-import 'package:school_ride_sharing/screens/testing2.dart';
+import 'package:school_ride_sharing/screens/upload_evidence.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,8 +55,8 @@ class MyApp extends StatelessWidget {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return TabsScreen();
-            // return Testing2();
+            // return TabsScreen();
+            return UploadEvidence();
             // return SearchDestinationPage();
           }
           return AuthScreen();

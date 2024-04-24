@@ -4,6 +4,7 @@ import 'package:school_ride_sharing/screens/carpool_manage/carpool_manage.dart';
 import 'package:school_ride_sharing/screens/carpool_list.dart';
 import 'package:school_ride_sharing/screens/friend_list.dart';
 import 'package:school_ride_sharing/screens/profile.dart';
+import 'package:school_ride_sharing/screens/search_destination_page.dart';
 import 'package:school_ride_sharing/widgets/request_offer_dialog.dart';
 
 class TabsScreen extends StatefulWidget {
@@ -22,29 +23,29 @@ class _TabsScreenState extends State<TabsScreen> {
     });
   }
 
-  Future openDialog() => showDialog(
-        context: context,
-        builder: (context) => Dialog(
-          child: Stack(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(20.0),
-                child: RequestOrOfferDialog(),
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  icon: const Icon(Icons.close),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+  // Future openDialog() => showDialog(
+  //       context: context,
+  //       builder: (context) => Dialog(
+  //         child: Stack(
+  //           children: [
+  //             const Padding(
+  //               padding: EdgeInsets.all(20.0),
+  //               child: RequestOrOfferDialog(),
+  //             ),
+  //             Positioned(
+  //               right: 0,
+  //               top: 0,
+  //               child: IconButton(
+  //                 onPressed: () {
+  //                   Navigator.of(context).pop();
+  //                 },
+  //                 icon: const Icon(Icons.close),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     );
 
   @override
   Widget build(BuildContext context) {
@@ -66,12 +67,12 @@ class _TabsScreenState extends State<TabsScreen> {
         //     icon: const Icon(Icons.compare_arrows_sharp)),
         IconButton(
             onPressed: () {
-              openDialog();
-              // Navigator.of(context).push(
-              //   MaterialPageRoute(
-              //     builder: (context) => const SearchDestinationPage(),
-              //   ),
-              // );
+              // openDialog();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SearchDestinationPage(),
+                ),
+              );
             },
             icon: const Icon(Icons.add)),
       ],

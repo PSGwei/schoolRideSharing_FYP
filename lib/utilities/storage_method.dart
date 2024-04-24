@@ -16,36 +16,25 @@ class StorageMethods {
   final FirebaseAuth userAuth = FirebaseAuth.instance;
 
   Future<String> uploadImageToStorage(
-      String childName, String imagePath) async {
-    // retrieve binary data of the image
-    final imageByteData = await rootBundle.load(imagePath);
+    String childName,
+    Uint8List imageFile,
+  ) async {
+    Reference ref;
 
-    // provides a Directory object that points to a temporary directory on the device
-    // this function just return the path, doesn't create and return a new directory
-    final Directory tempDir = await getTemporaryDirectory();
-
-    final String tempFilePath = '${tempDir.path}/${path.basename(imagePath)}';
-
-    // Create a file instance
-    final File tempFile = File(tempFilePath);
-
-    // make sure the temporary directory exist
-    await tempDir.create(recursive: true);
-
-    // write the data to file
-    await tempFile.writeAsBytes(imageByteData.buffer.asUint8List());
-
-    //creates a reference(pointer) to a location( a file or a directory) within Firebase Storage,
-    //allowing to access or modify it.
-    Reference ref = firebaseStorage
-        .ref()
-        .child(childName)
-        .child('${userAuth.currentUser!.uid}.png');
+    if (childName == 'carpool evidences') {
+      ref = firebaseStorage
+          .ref()
+          .child(childName)
+          .child('${userAuth.currentUser!.uid}.png');
+    } else {
+      ref = firebaseStorage
+          .ref()
+          .child(childName)
+          .child('${userAuth.currentUser!.uid}.png');
+    }
 
     // upload image
-    await ref.putFile(tempFile);
-
-    await tempFile.delete();
+    await ref.putData(imageFile);
 
     // get image URL
     String imageURL = await ref.getDownloadURL();

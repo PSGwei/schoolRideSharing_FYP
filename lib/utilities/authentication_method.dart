@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:school_ride_sharing/models/user.dart' as models;
+import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/utilities/global_variables.dart';
 import 'package:school_ride_sharing/utilities/storage_method.dart';
 
@@ -16,14 +19,16 @@ class AuthMethods {
     required String password,
     required String username,
     required String gender,
-    required String imageFile,
+    required String imagePath,
   }) async {
     try {
       UserCredential userCredential = await firebaseAuth
           .createUserWithEmailAndPassword(email: email, password: password);
 
+      final Uint8List imageBytes = await loadProjectImageBytes(imagePath);
+
       String imageURL =
-          await StorageMethods().uploadImageToStorage('avatars', imageFile);
+          await StorageMethods().uploadImageToStorage('avatars', imageBytes);
 
       models.User user = models.User(
         uid: userCredential.user!.uid,
@@ -80,8 +85,12 @@ class AuthMethods {
 
     await FirebaseAuth.instance.signInWithCredential(credential);
 
-    String imageURL = await StorageMethods()
-        .uploadImageToStorage('avatars', gUser.photoUrl ?? defaultAvatar);
+    final Uint8List imageBytes =
+        await loadProjectImageBytes(gUser.photoUrl ?? defaultAvatar);
+
+    String imageURL =
+        await StorageMethods().uploadImageToStorage('avatars', imageBytes);
+
     models.User user = models.User(
       uid: firebaseAuth.currentUser!.uid,
       username: gUser.displayName ?? 'User',

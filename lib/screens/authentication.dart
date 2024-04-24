@@ -43,7 +43,7 @@ class _AuthScreenState extends State<AuthScreen> {
           password: enteredPassword,
           username: enteredUsername,
           gender: gender,
-          imageFile: 'assets/images/avatarman.png',
+          imagePath: 'assets/images/avatarman.png',
         );
       }
       if (!context.mounted) return;

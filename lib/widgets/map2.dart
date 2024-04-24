@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
-import 'package:school_ride_sharing/screens/testing2.dart';
+import 'package:school_ride_sharing/screens/upload_evidence.dart';
 import 'package:school_ride_sharing/utilities/global_variables.dart';
 import 'package:school_ride_sharing/models/user.dart' as models;
 import 'package:school_ride_sharing/widgets/loading_indicator.dart';
@@ -41,7 +41,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
   int currentDestinationIndex = 0;
 
   bool isCurrentRouteComplete = false;
-  bool isAllPsgCompleted = false;
+  bool isAllRouteCompleted = false;
   bool isRouteLoading = false;
 
   late LatLng targetDestination;
@@ -49,15 +49,12 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
 
   List<LatLng> destionationList = [];
 
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
     passengers = widget.passengers;
-
-    // currentPassengerLatitude = double.parse(
-    //     passengers[currentPassengerIndex].defaultAddress!.latitude);
-    // currentPassengerLongitude = double.parse(
-    //     passengers[currentPassengerIndex].defaultAddress!.longitude);
 
     carpoolDestination = LatLng(
       double.parse(widget.carpool.destination.latitude),
@@ -87,7 +84,6 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
               setState(() {
                 isRouteLoading = false; // Start showing the loading indicator
               });
-              // listenDriverCurrentLocation();
             },
           ),
         ),
@@ -97,6 +93,8 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
 
   @override
   void dispose() {
+    print("MapDisplay2 dispose started");
+    controllerGoogleMap?.dispose();
     positionStreamHomePage?.cancel();
     Geofire.removeLocation(widget.carpool.uid);
     super.dispose();
@@ -109,57 +107,55 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
         title: const Text('Real-time Tracking'),
       ),
       body: isRouteLoading
-          ? Center(
-              child: LoadingIndicator(
-              message: 'Loading the map....',
-            ))
+          ? const Center(child: LoadingIndicator(message: 'Loading the map...'))
           : driverCurrentPosition == null
-              ? const Center(
-                  child: Text('Loading...'),
-                )
-              : Stack(
-                  children: [
-                    GoogleMap(
-                      mapType: MapType.normal,
-                      myLocationEnabled: true,
-                      zoomControlsEnabled: true,
-                      initialCameraPosition: malaysiaPosition,
-                      onMapCreated: (GoogleMapController mapController) async {
-                        controllerGoogleMap = mapController;
-                        // googleMapCompleterController.complete(controllerGoogleMap);
-                        // getCurrentLiveLocationOfUser();
-                        // await listenDriverCurrentLocation();
-                        // await getPolylinePoints().then((coordinates) =>
-                        //     generatePolyLineFromPoints(coordinates));
-                        listenDriverCurrentLocation();
-                      },
-                      markers: markers,
-                      polylines: Set<Polyline>.of(polylines.values),
-                    ),
-                    DraggableScrollableSheet(
-                      initialChildSize: 0.15,
-                      minChildSize: 0.15,
-                      maxChildSize: 0.45,
-                      builder: (context, controller) => ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.all(10.0),
-                          color: Colors.black87,
-                          child: ListView.builder(
-                            controller: controller,
-                            itemCount: widget.carpool.participants.length,
-                            itemBuilder: (context, index) => TrackingDashbaord(
-                              onGoingIndex: currentDestinationIndex,
-                              index: index,
-                              isCurrentRouteComplete: isCurrentRouteComplete,
-                              passenger: passengers[index],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              ? const Center(child: Text('Loading...'))
+              : buildMap(),
+    );
+  }
+
+  Widget buildMap() {
+    return Stack(
+      children: [
+        GoogleMap(
+          mapType: MapType.normal,
+          myLocationEnabled: true,
+          zoomControlsEnabled: true,
+          initialCameraPosition: malaysiaPosition,
+          onMapCreated: (GoogleMapController mapController) {
+            controllerGoogleMap = mapController;
+            listenDriverCurrentLocation();
+          },
+          markers: markers,
+          polylines: Set<Polyline>.of(polylines.values),
+        ),
+        buildTrackingSheet(),
+      ],
+    );
+  }
+
+  Widget buildTrackingSheet() {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.15,
+      minChildSize: 0.15,
+      maxChildSize: 0.45,
+      builder: (context, controller) => ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(10.0),
+          color: Colors.black87,
+          child: ListView.builder(
+            controller: controller,
+            itemCount: widget.carpool.participants.length,
+            itemBuilder: (context, index) => TrackingDashbaord(
+              onGoingIndex: currentDestinationIndex,
+              index: index,
+              isCurrentRouteComplete: isCurrentRouteComplete,
+              passenger: passengers[index],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -177,26 +173,54 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
       // update the latest location to real-time database
       positionStreamHomePage = Geolocator.getPositionStream().listen(
         (Position position) async {
-          driverCurrentPosition = position;
+          if (!isAllRouteCompleted) {
+            driverCurrentPosition = position;
 
-          setState(() {
-            driverCurrentLatLng = LatLng(driverCurrentPosition!.latitude,
-                driverCurrentPosition!.longitude);
-          });
+            setState(() {
+              driverCurrentLatLng = LatLng(driverCurrentPosition!.latitude,
+                  driverCurrentPosition!.longitude);
+            });
 
-          Geofire.setLocation(
-            FirebaseAuth.instance.currentUser!.uid,
-            driverCurrentPosition!.latitude,
-            driverCurrentPosition!.longitude,
-          );
+            Geofire.setLocation(
+              FirebaseAuth.instance.currentUser!.uid,
+              driverCurrentPosition!.latitude,
+              driverCurrentPosition!.longitude,
+            );
 
-          await checkProximityToDestination(driverCurrentLatLng!);
+            bool isOutside = await isLocationOutsideRoute(
+                driverCurrentLatLng!, routeCoordinates);
+            if (isOutside) {
+              // Stop the location updates
+              await positionStreamHomePage?.cancel();
+              positionStreamHomePage = null;
+              // Show alert dialog
+              if (!context.mounted) return;
+              showCustomDialog(context, 'Route Deviation Alert',
+                  'Warning: The driver has deviated from the planned route.');
+            }
 
-          // update map camera to current position
-          CameraPosition cameraPosition =
-              CameraPosition(target: driverCurrentLatLng!, zoom: 15);
-          controllerGoogleMap!
-              .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+            await checkProximityToDestination(driverCurrentLatLng!);
+
+            print("update map position");
+
+            CameraPosition cameraPosition =
+                CameraPosition(target: driverCurrentLatLng!, zoom: 16);
+
+            // update map camera to current position
+            try {
+              if (!mounted)
+                return; // Checks if the widget is still in the widget tree
+              if (driverCurrentLatLng != null && controllerGoogleMap != null) {
+                if (_debounce?.isActive ?? false) _debounce!.cancel();
+                _debounce = Timer(const Duration(milliseconds: 500), () {
+                  controllerGoogleMap!.animateCamera(
+                      CameraUpdate.newCameraPosition(cameraPosition));
+                });
+              }
+            } catch (e) {
+              print('Failed to animate camera: $e');
+            }
+          }
         },
       );
     } else {
@@ -205,7 +229,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
   }
 
   Future<void> checkProximityToDestination(LatLng driverCurrentLocation) async {
-    if (currentDestinationIndex < passengers.length) {
+    if (currentDestinationIndex < destionationList.length) {
       LatLng targetDestination = destionationList[currentDestinationIndex];
 
       double distance = Geolocator.distanceBetween(
@@ -215,13 +239,13 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
         targetDestination.longitude,
       );
 
-      // print(
-      //     'currentDestinationIndex in checkProximity: $currentDestinationIndex');
-      // print('targetDestination in checkProximity: $targetDestination');
-
-      if (distance <= 50.0) {
-        // 100 meters proximity threshold
-        currentDestinationIndex++;
+      if (currentDestinationIndex == destionationList.length - 1 &&
+          distance <= 50.0) {
+        await onAllRoutesCompleted();
+      } else if (distance <= 50.0) {
+        setState(() {
+          currentDestinationIndex++;
+        });
         await navigateToNextPassenger();
       }
     }
@@ -229,42 +253,59 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
 
   Future<void> navigateToNextPassenger() async {
     if (currentDestinationIndex < destionationList.length) {
-      // if (!context.mounted) return;
-      showCustomDialog(context,
-          "You have reached your destination. Preparing the next route.");
       if (currentDestinationIndex == destionationList.length - 1) {
-        // if (!context.mounted) return;
-        showCustomDialog(
-            context, 'All kids fetched completed. Going to School....');
+        showCustomDialog(context, 'Arrival',
+            'All kids fetched completed. Going to School....');
+      } else {
+        showCustomDialog(context, 'Arrival',
+            "You have reached your destination. Preparing the next route.");
       }
 
       LatLng targetDestination = destionationList[currentDestinationIndex];
       setState(() {
-        isRouteLoading = true; // Start showing the loading indicator
+        isRouteLoading = true;
       });
 
       await updateRoute(driverCurrentLatLng!, targetDestination);
 
       setState(() {
-        isRouteLoading = false; // Start showing the loading indicator
+        isRouteLoading = false;
       });
-    } else {
-      // await onAllRoutesCompleted();
-      Navigator.of(context)
-          .pushReplacement(MaterialPageRoute(builder: (context) => MyWidget()));
     }
   }
 
+  Future<bool> isLocationOutsideRoute(
+      LatLng userLocation, List<LatLng> pathPoints) async {
+    double minDistance = double.infinity;
+    //findNearestPointDistance
+    for (var point in pathPoints) {
+      double distance = Geolocator.distanceBetween(userLocation.latitude,
+          userLocation.longitude, point.latitude, point.longitude);
+      if (distance < minDistance) {
+        minDistance = distance;
+      }
+    }
+
+    return minDistance > 100; // Assuming 300 meters as the threshold
+  }
+
   Future<void> onAllRoutesCompleted() async {
-    // Show completion dialog
+    isAllRouteCompleted = true;
     if (!context.mounted) return;
-    showCustomDialog(context, 'All routes completed. Ending the ride.');
+    showCustomDialog(
+        context, 'Arrival', 'Carpool completed. Navigating to another page...');
 
     // Cancel the position listener
-    await positionStreamHomePage?.cancel();
-    positionStreamHomePage = null;
+    if (positionStreamHomePage != null) {
+      await positionStreamHomePage!.cancel();
+      positionStreamHomePage = null;
+      controllerGoogleMap?.dispose();
+      Geofire.removeLocation(widget.carpool.uid);
+    }
 
-    // Optionally, navigate to another screen or perform other cleanup
+    if (!context.mounted) return;
+    Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const UploadEvidence()));
   }
 
   Future<void> updateRoute(LatLng start, LatLng destination) async {
@@ -288,6 +329,9 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
       } else {
         print(result.errorMessage);
       }
+      setState(() {
+        routeCoordinates = polylineCoordinates;
+      });
     } catch (e) {
       print("Failed to fetch route: $e");
     }
@@ -310,24 +354,30 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
     List<LatLng> polylineCoordinates = [];
     PolylinePoints polylinePoints = PolylinePoints();
 
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      googleMapKey,
-      PointLatLng(
-          driverCurrentLatLng!.latitude, driverCurrentLatLng!.longitude),
-      PointLatLng(destionationList[0].latitude, destionationList[0].longitude),
-      travelMode: TravelMode.driving,
-    );
+    try {
+      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        googleMapKey,
+        PointLatLng(
+            driverCurrentLatLng!.latitude, driverCurrentLatLng!.longitude),
+        PointLatLng(
+            destionationList[0].latitude, destionationList[0].longitude),
+        travelMode: TravelMode.driving,
+      );
 
-    if (result.points.isNotEmpty) {
-      for (var point in result.points) {
-        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      if (result.points.isNotEmpty) {
+        for (var point in result.points) {
+          polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+        }
+      } else {
+        print(result.errorMessage);
       }
-    } else {
-      print(result.errorMessage);
+      setState(() {
+        routeCoordinates = polylineCoordinates;
+      });
+    } catch (e) {
+      print(e.toString());
     }
-    setState(() {
-      routeCoordinates = polylineCoordinates;
-    });
+
     return polylineCoordinates;
   }
 
@@ -397,21 +447,36 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
     }
   }
 
-  void showCustomDialog(BuildContext context, String message) {
+  void showCustomDialog(BuildContext context, String title, String message) {
     showDialog(
       context: context,
-      barrierDismissible:
-          false, // Dialog is dismissible with a tap on the barrier
+      // Dialog is dismissible with a tap on the barrier
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Arrival"),
-          content: Text(message),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: Colors.red.shade600,
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Dismiss the dialog
               },
-              child: const Text('Okay'),
+              child: const Text(
+                'Okay',
+                style: TextStyle(
+                  fontSize: 20,
+                ),
+              ),
             ),
           ],
         );

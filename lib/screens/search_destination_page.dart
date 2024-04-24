@@ -12,10 +12,7 @@ import 'package:school_ride_sharing/widgets/prediction_places_ui.dart';
 class SearchDestinationPage extends ConsumerStatefulWidget {
   const SearchDestinationPage({
     super.key,
-    required this.isOffer,
   });
-
-  final bool isOffer;
 
   @override
   ConsumerState<SearchDestinationPage> createState() =>
@@ -32,20 +29,7 @@ class _SearchDestinationPageState extends ConsumerState<SearchDestinationPage> {
   Position? currentPositionOfUser;
   late Address dropOffAddress;
   List<PredictionPlaces> destinationPredictionList = [];
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   getCurrentLiveLocationOfUser();
-  // }
-
-  // void getCurrentLiveLocationOfUser() async {
-  //   Position position = await Geolocator.getCurrentPosition(
-  //       desiredAccuracy: LocationAccuracy.bestForNavigation);
-  //   if (!mounted) return;
-  //   currentPositionOfUser = position;
-  //   await reverseGeoCoding(position, ref);
-  // }
+  bool isSucess = true;
 
   void searchLocation(String locationName, Address userLocation,
       [int radius = 1000]) async {
@@ -67,6 +51,7 @@ class _SearchDestinationPageState extends ConsumerState<SearchDestinationPage> {
     } else {
       setState(() {
         destinationPredictionList.clear();
+        isSucess = false;
       });
     }
   }
@@ -111,102 +96,77 @@ class _SearchDestinationPageState extends ConsumerState<SearchDestinationPage> {
               child: const Text('Next')),
         ],
       ),
-      body: Column(
-        children: [
-          Card(
-            elevation: 2,
-            child: Container(
-              height: 200,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Card(
+              elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.only(
-                    left: 24, top: 48, right: 24, bottom: 20),
-                child: Column(
+                  left: 24,
+                  top: 48,
+                  right: 24,
+                  bottom: 48,
+                ),
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/initial.png',
-                          height: 30,
-                          width: 30,
-                        ),
-                        Expanded(
-                          child: Container(
-                            // color: Colors.grey,
-                            child: TextField(
-                              controller: pickUpTextEditingController,
-                              decoration: const InputDecoration(
-                                hintText: 'Pickup Address',
-                                fillColor: Colors.white12,
-                                filled: true,
-                                // border: InputBorder.none,
-                                isDense: true,
-                              ),
-                            ),
+                    Image.asset(
+                      'assets/images/final.png',
+                      height: 30,
+                      width: 30,
+                    ),
+                    Expanded(
+                      child: Container(
+                        // color: Colors.grey,
+                        child: TextField(
+                          controller: destinationTextEditingController,
+                          onChanged: (value) {
+                            searchLocation(value, pickUpAddress!);
+                          },
+                          decoration: const InputDecoration(
+                            hintText: 'Destination Address',
+                            fillColor: Colors.white12,
+                            filled: true,
+                            // border: InputBorder.none,
+                            isDense: true,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/final.png',
-                          height: 30,
-                          width: 30,
-                        ),
-                        Expanded(
-                          child: Container(
-                            // color: Colors.grey,
-                            child: TextField(
-                              controller: destinationTextEditingController,
-                              onChanged: (value) {
-                                searchLocation(value, pickUpAddress!);
-                              },
-                              decoration: const InputDecoration(
-                                hintText: 'Destination Address',
-                                fillColor: Colors.white12,
-                                filled: true,
-                                // border: InputBorder.none,
-                                isDense: true,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-          (destinationPredictionList.isNotEmpty)
-              ? Padding(
-                  padding: EdgeInsets.fromLTRB(16, 16, 16, keyboardSpace),
-                  // padding: EdgeInsets.fromLTRB(
-                  //     left: 16, right: 16, bottom: keyboardSpace, top: 16),
-                  child: ListView.separated(
-                    itemBuilder: ((context, index) {
-                      return Card(
-                        elevation: 3,
-                        child: PredictionPlacesUI(
-                          predictionPlaces: destinationPredictionList[index],
-                          onSelectPlace: updateDestination,
+            (destinationPredictionList.isNotEmpty || isSucess)
+                ? Padding(
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, keyboardSpace),
+                    child: Expanded(
+                      child: SingleChildScrollView(
+                        child: ListView.separated(
+                          itemBuilder: ((context, index) {
+                            return Card(
+                              elevation: 3,
+                              child: PredictionPlacesUI(
+                                predictionPlaces:
+                                    destinationPredictionList[index],
+                                onSelectPlace: updateDestination,
+                              ),
+                            );
+                          }),
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 2),
+                          itemCount: destinationPredictionList.length,
+                          shrinkWrap: true,
+                          physics: const ClampingScrollPhysics(),
                         ),
-                      );
-                    }),
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 2),
-                    itemCount: destinationPredictionList.length,
-                    shrinkWrap: true,
-                    physics: const ClampingScrollPhysics(),
-                  ),
-                )
-              : const Center(
-                  child: Text('No result found'),
-                ),
-        ],
+                      ),
+                    ),
+                  )
+                : const Center(
+                    child: Text('No result found'),
+                  )
+          ],
+        ),
       ),
     );
   }

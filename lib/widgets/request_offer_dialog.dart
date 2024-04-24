@@ -33,8 +33,9 @@ class RequestOrOfferDialog extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                          builder: (context) =>
-                              const SearchDestinationPage(isOffer: true)),
+                          builder: (context) => const SearchDestinationPage(
+                              // isOffer: true,
+                              )),
                     );
                   },
                   style: ButtonStyle(
@@ -49,11 +50,12 @@ class RequestOrOfferDialog extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            const SearchDestinationPage(isOffer: false)),
-                  );
+                  // Navigator.of(context).pushReplacement(
+                  //   MaterialPageRoute(
+                  //     builder: (context) =>
+                  //         const SearchDestinationPage(isOffer: false),
+                  //   ),
+                  // );
                 },
                 style: ButtonStyle(
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(

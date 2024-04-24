@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
@@ -81,4 +83,9 @@ searchLocation(String originPlaceID, String destinationPlaceID) async {
   } else {
     return result;
   }
+}
+
+Future<Uint8List> loadProjectImageBytes(String imagePath) async {
+  final ByteData data = await rootBundle.load(imagePath);
+  return data.buffer.asUint8List();
 }
