@@ -107,8 +107,7 @@ class _TabsScreenState extends State<TabsScreen> {
               icon: Icon(Icons.home_outlined), label: 'Home'),
           BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.car), label: 'Carpool'),
-          BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.person_3_fill), label: 'Friends'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.profile_circled), label: 'Profile'),
         ],

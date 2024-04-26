@@ -74,7 +74,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
         isRouteLoading = true; // Start showing the loading indicator
       });
       sortPassengersByRouteDistance().then(
-        (_) => updatePassengerMarkers().then(
+        (_) => setLocationMarkers().then(
           (_) => getPolylinePoints()
               .then(
             (coordinates) => generatePolyLineFromPoints(coordinates),
@@ -286,14 +286,11 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
       }
     }
 
-    return minDistance > 100; // Assuming 300 meters as the threshold
+    return minDistance > 100; // Assuming 100 meters as the threshold
   }
 
   Future<void> onAllRoutesCompleted() async {
     isAllRouteCompleted = true;
-    if (!context.mounted) return;
-    showCustomDialog(
-        context, 'Arrival', 'Carpool completed. Navigating to another page...');
 
     // Cancel the position listener
     if (positionStreamHomePage != null) {
@@ -303,6 +300,13 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
       Geofire.removeLocation(widget.carpool.uid);
     }
 
+    if (!context.mounted) return;
+    showCustomDialog(
+        context, 'Arrival', 'Carpool completed. Navigating to another page...',
+        onDismissed: onDialogDismissed);
+  }
+
+  void onDialogDismissed() {
     if (!context.mounted) return;
     Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const UploadEvidence()));
@@ -394,7 +398,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
     });
   }
 
-  Future<void> updatePassengerMarkers() async {
+  Future<void> setLocationMarkers() async {
     final newMarkers = <Marker>{}; // Temporary set to hold new markers
     for (var passenger in widget.passengers) {
       LatLng passengerPosition = LatLng(
@@ -447,7 +451,8 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
     }
   }
 
-  void showCustomDialog(BuildContext context, String title, String message) {
+  void showCustomDialog(BuildContext context, String title, String message,
+      {VoidCallback? onDismissed}) {
     showDialog(
       context: context,
       // Dialog is dismissible with a tap on the barrier
@@ -470,6 +475,9 @@ class _MapDisplayState extends ConsumerState<MapDisplay2> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Dismiss the dialog
+                if (onDismissed != null) {
+                  onDismissed();
+                }
               },
               child: const Text(
                 'Okay',

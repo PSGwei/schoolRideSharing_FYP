@@ -55,9 +55,7 @@ class MyApp extends StatelessWidget {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            // return TabsScreen();
-            return UploadEvidence();
-            // return SearchDestinationPage();
+            return TabsScreen();
           }
           return AuthScreen();
         },

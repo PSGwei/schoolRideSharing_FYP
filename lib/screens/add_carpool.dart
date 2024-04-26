@@ -98,7 +98,8 @@ class _AddCarpoolState extends State<AddCarpool> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Request'),
+        title: const Text('Provide a Carpool'),
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       body: Padding(
         padding: const EdgeInsets.all(10),
@@ -111,6 +112,7 @@ class _AddCarpoolState extends State<AddCarpool> {
                   initialValue: widget.pickUpLocation.humanReadableAddress,
                   readOnly: true,
                   decoration: const InputDecoration(label: Text('From')),
+                  style: const TextStyle(overflow: TextOverflow.ellipsis),
                   // onSaved: (value) {
                   //   from = value!;
                   // },
@@ -119,6 +121,7 @@ class _AddCarpoolState extends State<AddCarpool> {
                   initialValue: widget.dropOffLocation.humanReadableAddress,
                   readOnly: true,
                   decoration: const InputDecoration(label: Text('To')),
+                  style: const TextStyle(overflow: TextOverflow.ellipsis),
                   // onSaved: (value) {
                   //   destination = value!;
                   // },
@@ -159,6 +162,7 @@ class _AddCarpoolState extends State<AddCarpool> {
                 TextFormField(
                     decoration: const InputDecoration(
                         label: Text('Additional Information'))),
+                SizedBox(height: 30),
                 ElevatedButton(
                     onPressed: () {
                       submit(context);

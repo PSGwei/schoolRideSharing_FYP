@@ -125,13 +125,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         if (value == null ||
                             value.isEmpty ||
                             value.trim().length < 5) {
-                          displaySnackbar(
-                              'username should be at least 5 characters',
-                              context);
+                          return 'username should be at least 5 characters';
                         } else if (value.trim().length > 20) {
-                          displaySnackbar(
-                              'username should not exceed 20 characters',
-                              context);
+                          return 'username should not exceed 20 characters';
                         }
                         return null;
                       },
@@ -148,8 +144,11 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
-                      if (value == null || !value.contains('@')) {
-                        displaySnackbar('email address invalid', context);
+                      final RegExp emailRegex =
+                          RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
+
+                      if (value == null || !emailRegex.hasMatch(value)) {
+                        return 'email address invalid';
                       }
                       return null;
                     },
@@ -177,9 +176,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     obscureText: hidePassword,
                     validator: (value) {
                       if (value == null || value.trim().length < 6) {
-                        displaySnackbar(
-                            'password should be at least 5 characters',
-                            context);
+                        return 'password should be at least 5 characters';
                       }
                       return null;
                     },

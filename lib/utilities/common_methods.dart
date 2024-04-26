@@ -67,7 +67,8 @@ Future<String> reverseGeoCoding(Position position, WidgetRef ref) async {
   return result;
 }
 
-searchLocation(String originPlaceID, String destinationPlaceID) async {
+Future<String> searchLocation(
+    String originPlaceID, String destinationPlaceID) async {
   String result = 'Error';
   String distanceAPIUrl =
       "https://maps.googleapis.com/maps/api/distancematrix/json?destinations=place_id:$destinationPlaceID&origins=place_id:$originPlaceID&key=$googleMapKey";
@@ -76,13 +77,12 @@ searchLocation(String originPlaceID, String destinationPlaceID) async {
     if (response["status"] == 'OK') {
       final elements = response['rows'][0]['elements'];
       if (elements[0]["status"] == 'OK') {
-        final distanceText = elements[0]['distance']['text'];
+        final String distanceText = elements[0]['distance']['text'];
         return distanceText;
       }
     }
-  } else {
-    return result;
   }
+  return result;
 }
 
 Future<Uint8List> loadProjectImageBytes(String imagePath) async {

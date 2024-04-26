@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class AvailableSeatUI extends StatelessWidget {
@@ -17,7 +16,7 @@ class AvailableSeatUI extends StatelessWidget {
     for (int i = 0; i < totalSeat - 1; i++) {
       seatIcons.add(
         Icon(
-          i < availableSeat ? Icons.chair_outlined : Icons.chair_outlined,
+          i < availableSeat ? Icons.chair_outlined : Icons.chair_rounded,
           size: 50,
         ),
       );

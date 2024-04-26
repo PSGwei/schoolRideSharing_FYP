@@ -51,15 +51,11 @@ class StorageMethods {
     String carpoolID = uuid.v4();
     String result = 'Something went wrong';
 
-    final String distance =
-        await searchLocation(pickUp.placeID, destination.placeID);
-
     Carpool carpool = Carpool(
       id: carpoolID,
       uid: userAuth.currentUser!.uid,
       pickUp: pickUp,
       destination: destination,
-      distance: distance != 'Error' ? distance : '',
       totalSeat: totalSeat,
       availableSeat: availableSeat,
       departureTime: departureTime,

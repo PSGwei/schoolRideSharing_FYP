@@ -8,8 +8,6 @@ import 'package:school_ride_sharing/models/carpool.dart';
 import 'package:school_ride_sharing/utilities/global_variables.dart';
 import 'package:school_ride_sharing/widgets/available_seat_ui.dart';
 
-// User? currentUser = CommonMethods.getCurrentUser();
-
 class RequestDetail extends ConsumerWidget {
   const RequestDetail({
     super.key,
@@ -26,7 +24,7 @@ class RequestDetail extends ConsumerWidget {
     double centerLongitude = (double.parse(carpool.pickUp.latitude) +
             double.parse(carpool.destination.longitude)) /
         2;
-    return 'https://maps.googleapis.com/maps/api/staticmap?center=${centerLatitude},${centerLongitude}=&zoom=16&size=600x300&maptype=roadmap&markers=color:red%7Clabel:A%7C${carpool.pickUp.latitude},${carpool.pickUp.longitude}&markers=color:blue%7Clabel:B%7C${carpool.destination.latitude},${carpool.destination.longitude}&key=$googleMapKey';
+    return 'https://maps.googleapis.com/maps/api/staticmap?center=${centerLatitude},${centerLongitude}=&zoom=14.5&size=600x300&maptype=roadmap&markers=color:red%7Clabel:A%7C${carpool.pickUp.latitude},${carpool.pickUp.longitude}&markers=color:red%7Clabel:B%7C${carpool.destination.latitude},${carpool.destination.longitude}&key=$googleMapKey';
   }
 
   void onSendRequest(BuildContext context) async {
@@ -48,7 +46,6 @@ class RequestDetail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final userAsyncValue = ref.watch(userProvider(carpool.uid));
     return Scaffold(
       appBar: AppBar(title: null),
       body: Padding(

@@ -8,7 +8,7 @@ class Carpool {
     required this.uid,
     required this.pickUp,
     required this.destination,
-    required this.distance,
+    this.distance = 0.0,
     required this.totalSeat,
     required this.availableSeat,
     required this.departureTime,
@@ -19,7 +19,7 @@ class Carpool {
   final String uid;
   final Address pickUp;
   final Address destination;
-  final String distance;
+  double distance;
   final int totalSeat;
   final int availableSeat;
   final DateTime departureTime;
@@ -44,7 +44,7 @@ class Carpool {
       uid: snapshot['uid'],
       pickUp: Address.toAddressModel(snapshot['pickUp']),
       destination: Address.toAddressModel(snapshot['destination']),
-      distance: snapshot['distance'],
+      // distance: snapshot['distance'],
       totalSeat: snapshot['totalSeat'],
       availableSeat: snapshot['availableSeat'],
       departureTime: timestamp.toDate(),
@@ -57,7 +57,6 @@ class Carpool {
         "uid": uid,
         "pickUp": pickUp.toJson(),
         "destination": destination.toJson(),
-        "distance": distance,
         "totalSeat": totalSeat,
         "availableSeat": availableSeat,
         "departureTime": departureTime,

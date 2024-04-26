@@ -11,6 +11,10 @@ import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/widgets/carpool_card.dart';
 import 'package:school_ride_sharing/widgets/loading_indicator.dart';
 
+enum SortOrder { ascending, descending }
+
+enum SortMethod { latestAscending, latestDescending, nearest, farthest }
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({
     super.key,
@@ -26,15 +30,20 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   Position? currentPositionOfUser;
   List<Carpool> carpoolList = [];
-  bool isLoadingPosition = false;
+  SortOrder sortOrder = SortOrder.descending;
+  SortMethod currentSortMethod = SortMethod.latestDescending;
 
-  @override
-  void initState() {
-    super.initState();
-    getCurrentLocationOfUser();
+  // Add two sorting functions here
+  void _sortByLatest(SortOrder sortOrder) {
+    carpoolList.sort((a, b) {
+      int comparison = a.date.compareTo(b.date);
+
+      // If descending order is desired, we invert the comparison
+      return sortOrder == SortOrder.descending ? -comparison : comparison;
+    });
   }
 
-  void getCurrentLocationOfUser() async {
+  Future<void> getCurrentLocationOfUser() async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -61,9 +70,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     // dont set at above getting permission
-    setState(() {
-      isLoadingPosition = true;
-    });
+    // setState(() {
+    //   isLoadingPosition = true;
+    // });
 
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.bestForNavigation);
@@ -73,8 +82,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     setState(() {
       currentPositionOfUser = position; // Update position
-      isLoadingPosition = false; // End loading
+      // isLoadingPosition = false; // End loading
     });
+  }
+
+  void calculateAndSortByDistance(bool sortByNearest) async {
+    // Sort list by distance based on sortByNearest flag
+    if (sortByNearest) {
+      // Sort by nearest
+      carpoolList.sort((a, b) => a.distance.compareTo(b.distance));
+    } else {
+      // Sort by farthest
+      carpoolList.sort((a, b) => b.distance.compareTo(a.distance));
+    }
+  }
+
+  void sortAndRefreshList() {
+    switch (currentSortMethod) {
+      case SortMethod.latestAscending:
+        _sortByLatest(SortOrder.ascending);
+        break;
+      case SortMethod.latestDescending:
+        _sortByLatest(SortOrder.descending);
+        break;
+      case SortMethod.nearest:
+        calculateAndSortByDistance(true);
+        break;
+      case SortMethod.farthest:
+        calculateAndSortByDistance(false);
+        break;
+    }
+  }
+
+  void calculateDistance() async {
+    if (currentPositionOfUser == null) {
+      await getCurrentLocationOfUser(); // Ensure you have the current position
+    }
+    for (var carpool in carpoolList) {
+      double distance = Geolocator.distanceBetween(
+        currentPositionOfUser!.latitude,
+        currentPositionOfUser!.longitude,
+        double.parse(carpool.pickUp.latitude),
+        double.parse(carpool.pickUp.longitude),
+      );
+      carpool.distance = distance;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentLocationOfUser();
   }
 
   void removeItem(Carpool carpool) async {
@@ -88,78 +146,125 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('carpools').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingIndicator(
-              message: 'Getting the data...',
-            );
-          }
+    return Column(
+      children: [
+        const SizedBox(height: 15),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  currentSortMethod =
+                      currentSortMethod == SortMethod.latestDescending
+                          ? SortMethod.latestAscending
+                          : SortMethod.latestDescending;
+                  sortAndRefreshList();
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero),
+              ),
+              child: Text(currentSortMethod == SortMethod.latestDescending
+                  ? 'Sort by Oldest'
+                  : 'Sort by Latest'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  currentSortMethod = currentSortMethod == SortMethod.nearest
+                      ? SortMethod.farthest
+                      : SortMethod.nearest;
+                  sortAndRefreshList();
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero),
+              ),
+              child: Text(currentSortMethod == SortMethod.nearest
+                  ? 'Sort by Farthest'
+                  : 'Sort by Nearest'),
+            ),
+          ],
+        ),
+        Expanded(
+          child: StreamBuilder(
+              stream:
+                  FirebaseFirestore.instance.collection('carpools').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const LoadingIndicator(
+                    message: 'Getting the data...',
+                  );
+                }
 
-          if (isLoadingPosition) {
-            const LoadingIndicator(
-              message: 'Getting the location...',
-            );
-          }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text('No data yet'),
+                  );
+                }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text('No data yet'),
-            );
-          }
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('Something went wrong'),
+                  );
+                }
 
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text('Something went wrong'),
-            );
-          }
+                final user = FirebaseAuth.instance.currentUser;
 
-          final user = FirebaseAuth.instance.currentUser;
+                Iterable<Carpool> carpools =
+                    snapshot.data!.docs.map((document) {
+                  Map<String, dynamic> data = document.data();
+                  return Carpool.toCarpoolModel(data);
+                });
 
-          Iterable<Carpool> carpools = snapshot.data!.docs.map((document) {
-            Map<String, dynamic> data = document.data();
-            return Carpool.toCarpoolModel(data);
-          });
+                if (widget.isMyCarpoolPage) {
+                  carpoolList = carpools
+                      .where((carpool) => carpool.uid == user!.uid)
+                      .toList();
+                } else {
+                  carpoolList = carpools.toList();
+                }
 
-          if (widget.isMyCarpoolPage) {
-            carpoolList =
-                carpools.where((carpool) => carpool.uid == user!.uid).toList();
-          } else {
-            carpoolList = carpools.toList();
-          }
+                if (carpoolList.isEmpty) {
+                  return const Center(
+                    child: Text('Empty'),
+                  );
+                }
 
-          if (carpoolList.isEmpty) {
-            return const Center(
-              child: Text('Empty'),
-            );
-          }
+                calculateDistance();
+                sortAndRefreshList();
 
-          return ListView.builder(
-            itemCount: carpoolList.length,
-            itemBuilder: (context, index) => InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => widget.isMyCarpoolPage
-                        ? CarpoolDetail(
-                            carpool: carpoolList[index],
-                          )
-                        : RequestDetail(
-                            carpool: carpoolList[index],
-                          ),
+                return ListView.builder(
+                  itemCount: carpoolList.length,
+                  itemBuilder: (context, index) => InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => widget.isMyCarpoolPage
+                              ? CarpoolDetail(
+                                  carpool: carpoolList[index],
+                                )
+                              : RequestDetail(
+                                  carpool: carpoolList[index],
+                                ),
+                        ),
+                      );
+                    },
+                    child: Dismissible(
+                      key: ValueKey(carpoolList[index].id),
+                      onDismissed: (direction) {
+                        removeItem(carpoolList[index]);
+                      },
+                      child: CarpoolCard(carpool: carpoolList[index]),
+                    ),
                   ),
                 );
-              },
-              child: Dismissible(
-                key: ValueKey(carpoolList[index].id),
-                onDismissed: (direction) {
-                  removeItem(carpoolList[index]);
-                },
-                child: CarpoolCard(carpool: carpoolList[index]),
-              ),
-            ),
-          );
-        });
+              }),
+        ),
+      ],
+    );
   }
 }

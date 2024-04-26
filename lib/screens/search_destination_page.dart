@@ -108,30 +108,61 @@ class _SearchDestinationPageState extends ConsumerState<SearchDestinationPage> {
                   right: 24,
                   bottom: 48,
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    Image.asset(
-                      'assets/images/final.png',
-                      height: 30,
-                      width: 30,
-                    ),
-                    Expanded(
-                      child: Container(
-                        // color: Colors.grey,
-                        child: TextField(
-                          controller: destinationTextEditingController,
-                          onChanged: (value) {
-                            searchLocation(value, pickUpAddress!);
-                          },
-                          decoration: const InputDecoration(
-                            hintText: 'Destination Address',
-                            fillColor: Colors.white12,
-                            filled: true,
-                            // border: InputBorder.none,
-                            isDense: true,
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/images/initial.png',
+                          height: 30,
+                          width: 30,
+                        ),
+                        Expanded(
+                          child: Container(
+                            // color: Colors.grey,
+                            child: TextField(
+                              controller: pickUpTextEditingController,
+                              decoration: const InputDecoration(
+                                hintText: 'Pickup Address',
+                                fillColor: Colors.white12,
+                                filled: true,
+                                // border: InputBorder.none,
+                                isDense: true,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/images/final.png',
+                          height: 30,
+                          width: 30,
+                        ),
+                        Expanded(
+                          child: Container(
+                            // color: Colors.grey,
+                            child: TextField(
+                              controller: destinationTextEditingController,
+                              onChanged: (value) {
+                                searchLocation(value, pickUpAddress!);
+                              },
+                              decoration: const InputDecoration(
+                                hintText: 'Destination Address',
+                                fillColor: Colors.white12,
+                                filled: true,
+                                // border: InputBorder.none,
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

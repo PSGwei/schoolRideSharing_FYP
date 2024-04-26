@@ -53,7 +53,7 @@ class CarpoolCard extends ConsumerWidget {
               Expanded(
                 child: Text(
                   carpool.pickUp.humanReadableAddress,
-                  style: TextStyle(overflow: TextOverflow.ellipsis),
+                  style: const TextStyle(overflow: TextOverflow.ellipsis),
                 ),
               ),
             ],
@@ -64,7 +64,7 @@ class CarpoolCard extends ConsumerWidget {
               Expanded(
                 child: Text(
                   carpool.destination.humanReadableAddress,
-                  style: TextStyle(overflow: TextOverflow.ellipsis),
+                  style: const TextStyle(overflow: TextOverflow.ellipsis),
                 ),
               ),
             ],
@@ -72,10 +72,12 @@ class CarpoolCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                carpool.distance,
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
+              carpool.distance == 0.0
+                  ? Text('loading...')
+                  : Text(
+                      '${((carpool.distance.round()) / 1000).toStringAsFixed(2)} km',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
             ],
           ),
         ],
