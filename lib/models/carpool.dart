@@ -13,6 +13,8 @@ class Carpool {
     required this.availableSeat,
     required this.departureTime,
     required this.participants,
+    required this.status,
+    this.imageURL = '',
   });
 
   final String id;
@@ -24,6 +26,8 @@ class Carpool {
   final int availableSeat;
   final DateTime departureTime;
   final List<String> participants;
+  final bool status;
+  final String imageURL;
 
   String get date {
     return DateFormat.yMd().format(departureTime);
@@ -49,6 +53,8 @@ class Carpool {
       availableSeat: snapshot['availableSeat'],
       departureTime: timestamp.toDate(),
       participants: participants,
+      status: snapshot['status'],
+      imageURL: snapshot['evidence'],
     );
   }
 
@@ -61,5 +67,7 @@ class Carpool {
         "availableSeat": availableSeat,
         "departureTime": departureTime,
         "participants": participants,
+        'status': status,
+        'evidence': imageURL,
       };
 }

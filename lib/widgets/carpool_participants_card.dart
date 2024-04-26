@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
 import 'package:school_ride_sharing/models/user.dart' as models;
 import 'package:school_ride_sharing/provider/current_user_provider.dart';
-import 'package:school_ride_sharing/widgets/map.dart';
-import 'package:school_ride_sharing/widgets/map2.dart';
+import 'package:school_ride_sharing/widgets/real-time_tracking_map.dart';
 
 class CarpoolParticipantCard extends ConsumerStatefulWidget {
   const CarpoolParticipantCard({
@@ -110,7 +109,7 @@ class _CarpoolParticipantCardState
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => MapDisplay2(
+                        builder: (context) => MapDisplay(
                           carpool: widget.carpool,
                           passengers: widget.participants,
                         ),

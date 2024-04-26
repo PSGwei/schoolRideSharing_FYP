@@ -191,8 +191,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         Expanded(
           child: StreamBuilder(
-              stream:
-                  FirebaseFirestore.instance.collection('carpools').snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('carpools')
+                  .where('status', isEqualTo: false)
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const LoadingIndicator(
@@ -253,13 +255,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       );
                     },
-                    child: Dismissible(
-                      key: ValueKey(carpoolList[index].id),
-                      onDismissed: (direction) {
-                        removeItem(carpoolList[index]);
-                      },
-                      child: CarpoolCard(carpool: carpoolList[index]),
-                    ),
+                    child: widget.isMyCarpoolPage
+                        ? Dismissible(
+                            key: ValueKey(carpoolList[index].id),
+                            onDismissed: (direction) {
+                              removeItem(carpoolList[index]);
+                            },
+                            child: CarpoolCard(carpool: carpoolList[index]),
+                          )
+                        : CarpoolCard(carpool: carpoolList[index]),
                   ),
                 );
               }),

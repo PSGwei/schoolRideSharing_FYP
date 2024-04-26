@@ -1,31 +1,22 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:school_ride_sharing/models/address.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
-import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/utilities/global_variables.dart';
-import 'package:path/path.dart' as path;
 
 class StorageMethods {
   final FirebaseStorage firebaseStorage = FirebaseStorage.instance;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
   final FirebaseAuth userAuth = FirebaseAuth.instance;
 
-  Future<String> uploadImageToStorage(
-    String childName,
-    Uint8List imageFile,
-  ) async {
+  Future<String> uploadImageToStorage(String childName, Uint8List imageFile,
+      {Carpool? carpool}) async {
     Reference ref;
 
-    if (childName == 'carpool evidences') {
-      ref = firebaseStorage
-          .ref()
-          .child(childName)
-          .child('${userAuth.currentUser!.uid}.png');
+    if (carpool != null) {
+      ref = firebaseStorage.ref().child(carpool.id).child('${carpool.uid}.png');
     } else {
       ref = firebaseStorage
           .ref()
@@ -60,6 +51,7 @@ class StorageMethods {
       availableSeat: availableSeat,
       departureTime: departureTime,
       participants: [],
+      status: false,
     );
 
     try {

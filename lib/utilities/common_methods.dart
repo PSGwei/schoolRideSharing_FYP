@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -88,4 +89,18 @@ Future<String> searchLocation(
 Future<Uint8List> loadProjectImageBytes(String imagePath) async {
   final ByteData data = await rootBundle.load(imagePath);
   return data.buffer.asUint8List();
+}
+
+Future<String> fetchImageUrl(
+    String collectionName, String fieldName, String documentId) async {
+  DocumentSnapshot docSnapshot = await FirebaseFirestore.instance
+      .collection(collectionName)
+      .doc(documentId)
+      .get();
+
+  if (docSnapshot.exists && docSnapshot.data() is Map) {
+    final data = docSnapshot.data() as Map<String, dynamic>;
+    return data[fieldName] ?? ''; // Assuming the field is named 'imageUrl'
+  }
+  return '';
 }

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:school_ride_sharing/screens/carpool_manage/carpool_manage.dart';
 import 'package:school_ride_sharing/screens/carpool_list.dart';
-import 'package:school_ride_sharing/screens/friend_list.dart';
+import 'package:school_ride_sharing/screens/completed_carpool.dart';
 import 'package:school_ride_sharing/screens/profile.dart';
 import 'package:school_ride_sharing/screens/search_destination_page.dart';
 import 'package:school_ride_sharing/widgets/request_offer_dialog.dart';
@@ -59,12 +59,6 @@ class _TabsScreenState extends State<TabsScreen> {
       title: Text(activeTitle),
       backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       actions: [
-        // IconButton(
-        //     onPressed: () {
-        //       Navigator.of(context).push(MaterialPageRoute(
-        //           builder: (context) => const SearchDestinationPage()));
-        //     },
-        //     icon: const Icon(Icons.compare_arrows_sharp)),
         IconButton(
             onPressed: () {
               // openDialog();
@@ -84,9 +78,15 @@ class _TabsScreenState extends State<TabsScreen> {
         activeTitle = 'Manage';
       });
     } else if (selectedPageIndex == 2) {
-      activeScreen = const FriendListScreen();
+      activeScreen = const CompletedCarpool();
+      setState(() {
+        activeTitle = 'Completed Carpool';
+      });
     } else if (selectedPageIndex == 3) {
       activeScreen = const ProfileScreen();
+      setState(() {
+        activeTitle = 'Profile';
+      });
     }
 
     return Scaffold(

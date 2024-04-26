@@ -1,7 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:school_ride_sharing/screens/carpool_list.dart';
+import 'package:school_ride_sharing/models/carpool.dart';
 import 'package:school_ride_sharing/screens/tabs.dart';
 import 'package:school_ride_sharing/utilities/common_methods.dart';
 import 'package:school_ride_sharing/utilities/storage_method.dart';
@@ -9,7 +10,12 @@ import 'package:school_ride_sharing/widgets/image_input.dart';
 import 'package:school_ride_sharing/widgets/loading_dialog.dart';
 
 class UploadEvidence extends StatefulWidget {
-  const UploadEvidence({super.key});
+  const UploadEvidence({
+    super.key,
+    required this.carpool,
+  });
+
+  final Carpool carpool;
 
   @override
   State<UploadEvidence> createState() => _UploadEvidenceState();
@@ -66,8 +72,39 @@ class _UploadEvidenceState extends State<UploadEvidence> {
     );
 
     try {
-      await StorageMethods()
-          .uploadImageToStorage('carpool evidences', imageFile);
+      final String imageURL = await StorageMethods().uploadImageToStorage(
+        'carpool evidences',
+        imageFile,
+        carpool: widget.carpool,
+      );
+
+      //update carpool status
+      final carpoolSnapshot = await FirebaseFirestore.instance
+          .collection('carpools')
+          .where('id', isEqualTo: widget.carpool.id)
+          .limit(1)
+          .get();
+
+      final userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('uid', isEqualTo: widget.carpool.uid)
+          .limit(1)
+          .get();
+
+      if (carpoolSnapshot.docs.isNotEmpty) {
+        await carpoolSnapshot.docs[0].reference.update({
+          'status': true,
+          'evidence': imageURL,
+        });
+      }
+
+      final userCredit = int.parse(carpoolSnapshot.docs[0].get('credit'));
+
+      if (userSnapshot.docs.isNotEmpty) {
+        await carpoolSnapshot.docs[0].reference.update({
+          'credit': userCredit + 10,
+        });
+      }
 
       if (!context.mounted) return;
       Navigator.of(context).pop();
