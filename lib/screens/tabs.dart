@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:school_ride_sharing/screens/carpool_manage/carpool_manage.dart';
@@ -5,7 +6,6 @@ import 'package:school_ride_sharing/screens/carpool_list.dart';
 import 'package:school_ride_sharing/screens/completed_carpool.dart';
 import 'package:school_ride_sharing/screens/profile.dart';
 import 'package:school_ride_sharing/screens/search_destination_page.dart';
-import 'package:school_ride_sharing/widgets/request_offer_dialog.dart';
 
 class TabsScreen extends StatefulWidget {
   const TabsScreen({super.key});
@@ -17,35 +17,24 @@ class TabsScreen extends StatefulWidget {
 class _TabsScreenState extends State<TabsScreen> {
   int selectedPageIndex = 0;
 
+  void setupPushNotification() async {
+    final fcm = FirebaseMessaging.instance;
+    await fcm.requestPermission();
+    final token = await fcm.getToken();
+    print("fcm token $token");
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    setupPushNotification();
+  }
+
   void selectPage(int index) {
     setState(() {
       selectedPageIndex = index;
     });
   }
-
-  // Future openDialog() => showDialog(
-  //       context: context,
-  //       builder: (context) => Dialog(
-  //         child: Stack(
-  //           children: [
-  //             const Padding(
-  //               padding: EdgeInsets.all(20.0),
-  //               child: RequestOrOfferDialog(),
-  //             ),
-  //             Positioned(
-  //               right: 0,
-  //               top: 0,
-  //               child: IconButton(
-  //                 onPressed: () {
-  //                   Navigator.of(context).pop();
-  //                 },
-  //                 icon: const Icon(Icons.close),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     );
 
   @override
   Widget build(BuildContext context) {
