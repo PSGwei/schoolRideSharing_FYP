@@ -263,7 +263,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             },
                             child: CarpoolCard(carpool: carpoolList[index]),
                           )
-                        : CarpoolCard(carpool: carpoolList[index]),
+                        : CarpoolCard(
+                            carpool: carpoolList[index],
+                            isHomePage: true,
+                          ),
                   ),
                 );
               }),

@@ -13,22 +13,28 @@ class CompletePhotoDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: fetchImageUrl('carpools', 'evidence', carpool.id),
-        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-          if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasData &&
-              snapshot.data!.isNotEmpty) {
-            return Center(
-              child: Container(
-                child: Image.network(snapshot.data!),
-              ),
-            );
-          } else if (snapshot.hasError) {
-            return Text('Error loading the image: ${snapshot.error}');
-          } else {
-            return const CircularProgressIndicator();
-          }
-        });
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Container(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Your kids have arrived to school safely',
+                  style: TextStyle(
+                    fontSize: 20,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Image.asset('assets/images/kid_dropoff.jpg'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

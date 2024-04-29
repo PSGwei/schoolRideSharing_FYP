@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:school_ride_sharing/screens/carpool_manage/joined_carpool.dart';
 import 'package:school_ride_sharing/screens/carpool_manage/request.dart';
 import 'package:school_ride_sharing/screens/carpool_list.dart';
 
@@ -34,7 +35,7 @@ class _CarpoolManageScreenState extends State<CarpoolManageScreen> {
               child: TabBarView(
                 children: [
                   HomeScreen(isMyCarpoolPage: true),
-                  HomeScreen(isMyCarpoolPage: true),
+                  JoinedCarpool(),
                   MyRequest(),
                 ],
               ),

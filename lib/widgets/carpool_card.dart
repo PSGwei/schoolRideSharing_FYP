@@ -9,9 +9,11 @@ class CarpoolCard extends ConsumerWidget {
   const CarpoolCard({
     super.key,
     required this.carpool,
+    this.isHomePage = false,
   });
 
   final Carpool carpool;
+  final bool isHomePage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,17 +71,19 @@ class CarpoolCard extends ConsumerWidget {
               ),
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              carpool.distance == 0.0
-                  ? Text('loading...')
-                  : Text(
-                      '${((carpool.distance.round()) / 1000).toStringAsFixed(2)} km',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-            ],
-          ),
+          isHomePage
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    carpool.distance == 0.0
+                        ? Text('loading...')
+                        : Text(
+                            '${((carpool.distance.round()) / 1000).toStringAsFixed(2)} km',
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                  ],
+                )
+              : SizedBox(),
         ],
       ),
     );
