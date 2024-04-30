@@ -7,13 +7,11 @@ class TrackingDashbaord extends StatelessWidget {
     super.key,
     required this.onGoingIndex,
     required this.index,
-    required this.isCurrentRouteComplete,
     required this.passenger,
   });
 
   final int onGoingIndex;
   final int index;
-  final bool isCurrentRouteComplete;
   final User passenger;
 
   @override
@@ -28,7 +26,7 @@ class TrackingDashbaord extends StatelessWidget {
                 '${index + 1}: Going to ${passenger.username}\'s house ',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 15,
                 ),
               ),
             ),
@@ -39,7 +37,7 @@ class TrackingDashbaord extends StatelessWidget {
               '${index + 1}: Going to ${passenger.username}\'s house ',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 20,
+                fontSize: 15,
               ),
             ),
           );

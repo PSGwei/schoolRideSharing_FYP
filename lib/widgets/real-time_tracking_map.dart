@@ -40,7 +40,6 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
   List<models.User> passengers = [];
   int currentDestinationIndex = 0;
 
-  bool isCurrentRouteComplete = false;
   bool isAllRouteCompleted = false;
   bool isRouteLoading = false;
 
@@ -51,14 +50,10 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
 
   Timer? _debounce;
 
-  bool isDriver = false;
-
   @override
   void initState() {
     super.initState();
     passengers = widget.passengers;
-
-    isDriver = FirebaseAuth.instance.currentUser!.uid == widget.carpool.uid;
 
     carpoolDestination = LatLng(
       double.parse(widget.carpool.destination.latitude),
@@ -73,43 +68,26 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
     }
     destionationList.add(carpoolDestination);
 
-    if (isDriver) {
-      initializeDriverLocation().then((_) {
-        setState(() {
-          isRouteLoading = true; // Start showing the loading indicator
-        });
-        sortPassengersByRouteDistance().then(
-          (_) => setLocationMarkers().then(
-            (_) => getPolylinePoints()
-                .then(
-              (coordinates) => generatePolyLineFromPoints(coordinates),
-            )
-                .then(
-              (_) {
-                setState(() {
-                  isRouteLoading = false; // Start showing the loading indicator
-                });
-              },
-            ),
-          ),
-        );
+    initializeDriverLocation().then((_) {
+      setState(() {
+        isRouteLoading = true; // Start showing the loading indicator
       });
-    } else {
-      startLocationAndRouteProcessing();
-    }
-  }
-
-  void startLocationAndRouteProcessing() async {
-    await listenToDriverLocationUpdates();
-    setState(() => isRouteLoading = true);
-
-    // await sortPassengersByRouteDistance();
-    // await setLocationMarkers();
-
-    final coordinates = await getPolylinePoints();
-    generatePolyLineFromPoints(coordinates);
-
-    setState(() => isRouteLoading = false);
+      sortPassengersByRouteDistance().then(
+        (_) => setLocationMarkers().then(
+          (_) => getPolylinePoints()
+              .then(
+            (coordinates) => generatePolyLineFromPoints(coordinates),
+          )
+              .then(
+            (_) {
+              setState(() {
+                isRouteLoading = false; // Start showing the loading indicator
+              });
+            },
+          ),
+        ),
+      );
+    });
   }
 
   @override
@@ -145,7 +123,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
           initialCameraPosition: malaysiaPosition,
           onMapCreated: (GoogleMapController mapController) {
             controllerGoogleMap = mapController;
-            if (isDriver) listenDriverCurrentLocation();
+            listenDriverCurrentLocation();
           },
           markers: markers,
           polylines: Set<Polyline>.of(polylines.values),
@@ -171,7 +149,6 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
             itemBuilder: (context, index) => TrackingDashbaord(
               onGoingIndex: currentDestinationIndex,
               index: index,
-              isCurrentRouteComplete: isCurrentRouteComplete,
               passenger: passengers[index],
             ),
           ),
@@ -464,20 +441,18 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
   }
 
   Future<void> initializeDriverLocation() async {
-    if (isDriver) {
-      // get driver current position
-      try {
-        driverCurrentPosition = await Geolocator.getCurrentPosition();
+    // get driver current position
+    try {
+      driverCurrentPosition = await Geolocator.getCurrentPosition();
 
-        setState(() {
-          driverCurrentLatLng = LatLng(driverCurrentPosition!.latitude,
-              driverCurrentPosition!.longitude);
-        });
+      setState(() {
+        driverCurrentLatLng = LatLng(
+            driverCurrentPosition!.latitude, driverCurrentPosition!.longitude);
+      });
 
-        updateDriverLocationInDatabase(driverCurrentPosition!);
-      } catch (e) {
-        print('Failed to get initial location: $e');
-      }
+      updateDriverLocationInDatabase(driverCurrentPosition!);
+    } catch (e) {
+      print('Failed to get initial location: $e');
     }
   }
 
