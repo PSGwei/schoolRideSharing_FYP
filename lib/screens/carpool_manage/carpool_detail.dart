@@ -15,7 +15,7 @@ class CarpoolDetail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final List<String> participantsID = List<String>.from(carpool.participants);
+    // final List<String> participantsID = List<String>.from(carpool.participants);
 
     // Future<List<User>> participantsFuture =
     //     AuthMethods().getUserDetails2(participantsID);

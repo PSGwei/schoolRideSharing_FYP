@@ -148,46 +148,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 15),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  currentSortMethod =
-                      currentSortMethod == SortMethod.latestDescending
-                          ? SortMethod.latestAscending
-                          : SortMethod.latestDescending;
-                  sortAndRefreshList();
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero),
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      currentSortMethod =
+                          currentSortMethod == SortMethod.latestDescending
+                              ? SortMethod.latestAscending
+                              : SortMethod.latestDescending;
+                      sortAndRefreshList();
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero),
+                  ),
+                  child: Text(currentSortMethod == SortMethod.latestDescending
+                      ? 'Sort by Oldest'
+                      : 'Sort by Latest'),
+                ),
               ),
-              child: Text(currentSortMethod == SortMethod.latestDescending
-                  ? 'Sort by Oldest'
-                  : 'Sort by Latest'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  currentSortMethod = currentSortMethod == SortMethod.nearest
-                      ? SortMethod.farthest
-                      : SortMethod.nearest;
-                  sortAndRefreshList();
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      currentSortMethod =
+                          currentSortMethod == SortMethod.nearest
+                              ? SortMethod.farthest
+                              : SortMethod.nearest;
+                      sortAndRefreshList();
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero),
+                  ),
+                  child: Text(currentSortMethod == SortMethod.nearest
+                      ? 'Sort by Farthest'
+                      : 'Sort by Nearest'),
+                ),
               ),
-              child: Text(currentSortMethod == SortMethod.nearest
-                  ? 'Sort by Farthest'
-                  : 'Sort by Nearest'),
-            ),
-          ],
+            ],
+          ),
         ),
         Expanded(
           child: StreamBuilder(

@@ -1,8 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
 import 'package:school_ride_sharing/models/user.dart' as models;
-import 'package:school_ride_sharing/provider/current_user_provider.dart';
+import 'package:school_ride_sharing/provider/user_provider.dart';
 import 'package:school_ride_sharing/widgets/real-time_tracking_map.dart';
 
 import 'carpool_participant_container.dart';
@@ -24,10 +25,23 @@ class CarpoolParticipantCard extends ConsumerStatefulWidget {
 
 class _CarpoolParticipantCardState
     extends ConsumerState<CarpoolParticipantCard> {
+  final currentUserID = FirebaseAuth.instance.currentUser!.uid;
+  bool isParticipant = false;
+
+  @override
+  void initState() {
+    super.initState();
+    for (models.User participant in widget.participants) {
+      if (participant.uid == currentUserID) {
+        isParticipant = true;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<models.User> currentUserAsyncValue =
-        ref.watch(currentUserProvider);
+    final AsyncValue<models.User> ownerAsyncValue =
+        ref.watch(userProvider(widget.carpool.uid));
 
     double height = MediaQuery.of(context).size.height;
 
@@ -62,10 +76,10 @@ class _CarpoolParticipantCardState
                         ],
                       ),
                       Center(
-                        child: currentUserAsyncValue.when(
+                        child: ownerAsyncValue.when(
                           data: (models.User user) =>
                               CarpoolParticipantContainer(
-                            participant: user,
+                            user: user,
                             carpool: widget.carpool,
                           ),
                           loading: () => const Text('Loading...'),
@@ -99,7 +113,7 @@ class _CarpoolParticipantCardState
                         children: [
                           ...widget.participants.map(
                             (participant) => CarpoolParticipantContainer(
-                              participant: participant,
+                              user: participant,
                               carpool: widget.carpool,
                             ),
                           )
@@ -122,7 +136,9 @@ class _CarpoolParticipantCardState
                       ),
                     );
                   },
-                  child: const Text('Start!'),
+                  child: isParticipant
+                      ? const Text('Join!')
+                      : const Text('Start!'),
                 ),
               ],
             ),

@@ -1,7 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
-import 'package:school_ride_sharing/utilities/common_methods.dart';
 
 class CompletePhotoDisplay extends StatelessWidget {
   const CompletePhotoDisplay({
@@ -29,7 +27,7 @@ class CompletePhotoDisplay extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 30),
-                Image.asset('assets/images/kid_dropoff.jpg'),
+                Image.network(carpool.imageURL),
               ],
             ),
           ),

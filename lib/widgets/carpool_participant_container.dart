@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
 import 'package:school_ride_sharing/models/user.dart' as models;
@@ -7,27 +8,33 @@ import 'package:school_ride_sharing/screens/carpool_manage/request.dart';
 class CarpoolParticipantContainer extends StatelessWidget {
   const CarpoolParticipantContainer({
     super.key,
-    required this.participant,
+    required this.user,
     required this.carpool,
   });
 
-  final models.User participant;
+  final models.User user;
   final Carpool carpool;
 
   @override
   Widget build(BuildContext context) {
+    final currentUserID = FirebaseAuth.instance.currentUser!.uid;
+
     return Container(
       child: Column(
         children: [
-          GestureDetector(
-            onTap: () {
-              showPopup(context);
-            },
-            child: CircleAvatar(
-              backgroundImage: NetworkImage(participant.avatar),
-            ),
-          ),
-          Text(participant.username)
+          currentUserID == carpool.uid
+              ? GestureDetector(
+                  onTap: () {
+                    showPopup(context);
+                  },
+                  child: CircleAvatar(
+                    backgroundImage: NetworkImage(user.avatar),
+                  ),
+                )
+              : CircleAvatar(
+                  backgroundImage: NetworkImage(user.avatar),
+                ),
+          Text(user.username)
         ],
       ),
     );
@@ -62,7 +69,7 @@ class CarpoolParticipantContainer extends StatelessWidget {
       DocumentSnapshot snapshot = await transaction.get(docRef);
       if (snapshot.exists) {
         List<dynamic> participants = snapshot['participants'];
-        participants.remove(participant.uid);
+        participants.remove(user.uid);
 
         transaction.update(docRef, {'participants': participants});
       }

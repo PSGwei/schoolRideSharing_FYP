@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
+import 'package:school_ride_sharing/screens/carpool_manage/carpool_detail.dart';
 import 'package:school_ride_sharing/widgets/carpool_card.dart';
 import 'package:school_ride_sharing/widgets/loading_indicator.dart';
 
@@ -47,12 +48,20 @@ class JoinedCarpool extends StatelessWidget {
           );
         }
 
-        // Now that you have your carpools, you can build your UI accordingly
         return ListView.builder(
           itemCount: carpools.length,
           itemBuilder: (context, index) {
-            // return your widgets here, for example:
-            return CarpoolCard(carpool: carpools[index]);
+            return InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        CarpoolDetail(carpool: carpools[index]),
+                  ),
+                );
+              },
+              child: CarpoolCard(carpool: carpools[index]),
+            );
           },
         );
       },

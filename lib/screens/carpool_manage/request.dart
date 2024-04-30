@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:school_ride_sharing/provider/user_id_provider.dart';
-import 'package:school_ride_sharing/provider/username_provider.dart';
+import 'package:school_ride_sharing/provider/user_provider.dart';
 import 'package:school_ride_sharing/utilities/common_methods.dart';
 
 FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -13,6 +13,7 @@ class MyRequest extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userId = ref.watch(userIdProvider).asData?.value;
+
     void deleteRequest(String requestId) async {
       await firestore.collection('requests').doc(requestId).delete();
     }
@@ -80,39 +81,45 @@ class MyRequest extends ConsumerWidget {
           itemCount: loadedRequests.length,
           itemBuilder: (context, index) {
             final requesterId = loadedRequests[index].get('requester_id');
-            final requesterUsername = ref.watch(usernameProvider(requesterId));
 
-            return ListTile(
-              leading: const CircleAvatar(
-                radius: 30,
-              ),
-              title: requesterUsername.when(
-                data: (requesterUsername) =>
-                    Text('$requesterUsername has sent you a carpool request'),
-                error: (e, st) => Text('Error: $e'),
-                loading: () => const SizedBox(),
-              ),
-              trailing: Container(
-                width: 100,
-                child: Row(
-                  children: [
-                    IconButton(
-                        onPressed: () {
-                          acceptRequest(
-                            loadedRequests[index].data()['carpool_id'],
-                            loadedRequests[index].data()['requester_id'],
+            return Consumer(
+              builder: ((context, ref, child) {
+                final requesterAsyncValue =
+                    ref.watch(userProvider(requesterId));
+                return requesterAsyncValue.when(
+                  data: (requester) => ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: NetworkImage(requester.avatar),
+                    ),
+                    title: Text(
+                        '${requester.username} has sent you a carpool request'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: () => acceptRequest(
+                            loadedRequests[index].get('carpool_id'),
+                            requesterId,
                             loadedRequests[index].id,
-                          );
-                        },
-                        icon: const Icon(Icons.check)),
-                    IconButton(
-                        onPressed: () {
-                          deleteRequest(loadedRequests[index].id);
-                        },
-                        icon: const Icon(Icons.close)),
-                  ],
-                ),
-              ),
+                          ),
+                          icon: const Icon(Icons.check),
+                        ),
+                        IconButton(
+                          onPressed: () =>
+                              deleteRequest(loadedRequests[index].id),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                  ),
+                  error: (_, __) => const ListTile(
+                    title: Text('Failed to load user data'),
+                  ),
+                  loading: () => const ListTile(
+                    title: Text('Loading...'),
+                  ),
+                );
+              }),
             );
           },
         );
