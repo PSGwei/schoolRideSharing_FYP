@@ -5,6 +5,7 @@ import 'package:school_ride_sharing/models/carpool.dart';
 import 'package:school_ride_sharing/models/user.dart' as models;
 import 'package:school_ride_sharing/provider/user_provider.dart';
 import 'package:school_ride_sharing/widgets/real-time_tracking_map.dart';
+import 'package:school_ride_sharing/widgets/te.dart';
 
 import 'carpool_participant_container.dart';
 
@@ -129,10 +130,15 @@ class _CarpoolParticipantCardState
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => MapDisplay(
-                          carpool: widget.carpool,
-                          passengers: widget.participants,
-                        ),
+                        builder: (context) => isParticipant
+                            ? Testing(
+                                carpool: widget.carpool,
+                                passengers: widget.participants,
+                              )
+                            : MapDisplay(
+                                carpool: widget.carpool,
+                                passengers: widget.participants,
+                              ),
                       ),
                     );
                   },

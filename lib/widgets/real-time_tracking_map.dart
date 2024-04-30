@@ -51,10 +51,14 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
 
   Timer? _debounce;
 
+  bool isDriver = false;
+
   @override
   void initState() {
     super.initState();
     passengers = widget.passengers;
+
+    isDriver = FirebaseAuth.instance.currentUser!.uid == widget.carpool.uid;
 
     carpoolDestination = LatLng(
       double.parse(widget.carpool.destination.latitude),
@@ -69,26 +73,43 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
     }
     destionationList.add(carpoolDestination);
 
-    initializeDriverLocation().then((_) {
-      setState(() {
-        isRouteLoading = true; // Start showing the loading indicator
-      });
-      sortPassengersByRouteDistance().then(
-        (_) => setLocationMarkers().then(
-          (_) => getPolylinePoints()
-              .then(
-            (coordinates) => generatePolyLineFromPoints(coordinates),
-          )
-              .then(
-            (_) {
-              setState(() {
-                isRouteLoading = false; // Start showing the loading indicator
-              });
-            },
+    if (isDriver) {
+      initializeDriverLocation().then((_) {
+        setState(() {
+          isRouteLoading = true; // Start showing the loading indicator
+        });
+        sortPassengersByRouteDistance().then(
+          (_) => setLocationMarkers().then(
+            (_) => getPolylinePoints()
+                .then(
+              (coordinates) => generatePolyLineFromPoints(coordinates),
+            )
+                .then(
+              (_) {
+                setState(() {
+                  isRouteLoading = false; // Start showing the loading indicator
+                });
+              },
+            ),
           ),
-        ),
-      );
-    });
+        );
+      });
+    } else {
+      startLocationAndRouteProcessing();
+    }
+  }
+
+  void startLocationAndRouteProcessing() async {
+    await listenToDriverLocationUpdates();
+    setState(() => isRouteLoading = true);
+
+    // await sortPassengersByRouteDistance();
+    // await setLocationMarkers();
+
+    final coordinates = await getPolylinePoints();
+    generatePolyLineFromPoints(coordinates);
+
+    setState(() => isRouteLoading = false);
   }
 
   @override
@@ -124,7 +145,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
           initialCameraPosition: malaysiaPosition,
           onMapCreated: (GoogleMapController mapController) {
             controllerGoogleMap = mapController;
-            listenDriverCurrentLocation();
+            if (isDriver) listenDriverCurrentLocation();
           },
           markers: markers,
           polylines: Set<Polyline>.of(polylines.values),
@@ -165,7 +186,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
     if (driverCurrentPosition != null) {
       // set initial location
       Geofire.setLocation(
-        FirebaseAuth.instance.currentUser!.uid,
+        widget.carpool.uid,
         driverCurrentPosition!.latitude,
         driverCurrentPosition!.longitude,
       );
@@ -401,55 +422,93 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
   }
 
   Future<void> setLocationMarkers() async {
-    final newMarkers = <Marker>{}; // Temporary set to hold new markers
-    for (var passenger in widget.passengers) {
-      LatLng passengerPosition = LatLng(
-          double.parse(passenger.defaultAddress!.latitude),
-          double.parse(passenger.defaultAddress!.longitude));
+    if (driverCurrentLatLng != null) {
+      final newMarkers = <Marker>{}; // Temporary set to hold new markers
+      for (var passenger in widget.passengers) {
+        LatLng passengerPosition = LatLng(
+            double.parse(passenger.defaultAddress!.latitude),
+            double.parse(passenger.defaultAddress!.longitude));
 
-      Marker passengerMarker = Marker(
-          markerId:
-              MarkerId(passenger.uid), // Assume each passenger has a unique id
-          position: passengerPosition,
-          icon: BitmapDescriptor.defaultMarker,
-          infoWindow: InfoWindow(
-              title: passenger.username) // Optional: shows name on tap
-          );
+        Marker passengerMarker = Marker(
+            markerId: MarkerId(
+                passenger.uid), // Assume each passenger has a unique id
+            position: passengerPosition,
+            icon: BitmapDescriptor.defaultMarker,
+            infoWindow: InfoWindow(
+                title: passenger.username) // Optional: shows name on tap
+            );
 
-      newMarkers.add(passengerMarker);
+        newMarkers.add(passengerMarker);
+      }
+      newMarkers.add(
+        Marker(
+          markerId: const MarkerId('driverCurrentLocation'),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          // icon: carIconNearbyDriver!,
+          position: driverCurrentLatLng!,
+        ),
+      );
+      newMarkers.add(
+        Marker(
+          markerId: const MarkerId('carpoolDestination'),
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow),
+          // icon: carIconNearbyDriver!,
+          position: carpoolDestination,
+        ),
+      );
+      setState(() {
+        markers = newMarkers; // Replace old markers with new ones
+      });
     }
-    newMarkers.add(
-      Marker(
-        markerId: const MarkerId('driverCurrentLocation'),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-        // icon: carIconNearbyDriver!,
-        position: driverCurrentLatLng!,
-      ),
-    );
-    newMarkers.add(
-      Marker(
-        markerId: const MarkerId('carpoolDestination'),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow),
-        // icon: carIconNearbyDriver!,
-        position: carpoolDestination,
-      ),
-    );
-    setState(() {
-      markers = newMarkers; // Replace old markers with new ones
-    });
   }
 
   Future<void> initializeDriverLocation() async {
-    // get driver current position
-    try {
-      driverCurrentPosition = await Geolocator.getCurrentPosition();
+    if (isDriver) {
+      // get driver current position
+      try {
+        driverCurrentPosition = await Geolocator.getCurrentPosition();
 
+        setState(() {
+          driverCurrentLatLng = LatLng(driverCurrentPosition!.latitude,
+              driverCurrentPosition!.longitude);
+        });
+
+        updateDriverLocationInDatabase(driverCurrentPosition!);
+      } catch (e) {
+        print('Failed to get initial location: $e');
+      }
+    }
+  }
+
+  void updateDriverLocationInDatabase(Position position) {
+    Geofire.setLocation(
+      widget.carpool.uid,
+      position.latitude,
+      position.longitude,
+    );
+  }
+
+  Future<void> listenToDriverLocationUpdates() async {
+    Geofire.initialize('onlineDrivers');
+    try {
+      final result = await Geofire.getLocation(widget.carpool.uid);
       setState(() {
-        driverCurrentLatLng = LatLng(
-            driverCurrentPosition!.latitude, driverCurrentPosition!.longitude);
+        driverCurrentLatLng = LatLng(result['lng'], result['lat']);
       });
-    } catch (e) {
-      print('Failed to get initial location: $e');
+    } catch (error) {
+      print(error.toString());
+    }
+    // updateDriverLocationInDatabase(position);
+  }
+
+  void updateMapCamera(LatLng? location) {
+    if (location != null && controllerGoogleMap != null) {
+      controllerGoogleMap!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: location, zoom: 16),
+        ),
+      );
     }
   }
 
