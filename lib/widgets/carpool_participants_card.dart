@@ -5,6 +5,8 @@ import 'package:school_ride_sharing/models/user.dart' as models;
 import 'package:school_ride_sharing/provider/current_user_provider.dart';
 import 'package:school_ride_sharing/widgets/real-time_tracking_map.dart';
 
+import 'carpool_participant_container.dart';
+
 class CarpoolParticipantCard extends ConsumerStatefulWidget {
   const CarpoolParticipantCard({
     super.key,
@@ -62,7 +64,10 @@ class _CarpoolParticipantCardState
                       Center(
                         child: currentUserAsyncValue.when(
                           data: (models.User user) =>
-                              CarpoolParticipantContainer(participant: user),
+                              CarpoolParticipantContainer(
+                            participant: user,
+                            carpool: widget.carpool,
+                          ),
                           loading: () => const Text('Loading...'),
                           error: (e, _) => const Text('Something went wrong'),
                         ),
@@ -95,6 +100,7 @@ class _CarpoolParticipantCardState
                           ...widget.participants.map(
                             (participant) => CarpoolParticipantContainer(
                               participant: participant,
+                              carpool: widget.carpool,
                             ),
                           )
                         ],
@@ -102,7 +108,7 @@ class _CarpoolParticipantCardState
                     ],
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 30,
                 ),
                 ElevatedButton(
@@ -113,7 +119,6 @@ class _CarpoolParticipantCardState
                           carpool: widget.carpool,
                           passengers: widget.participants,
                         ),
-                        // MapTesting(),
                       ),
                     );
                   },
@@ -123,29 +128,6 @@ class _CarpoolParticipantCardState
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class CarpoolParticipantContainer extends StatelessWidget {
-  const CarpoolParticipantContainer({
-    super.key,
-    required this.participant,
-  });
-
-  final models.User participant;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        children: [
-          CircleAvatar(
-            backgroundImage: NetworkImage(participant.avatar),
-          ),
-          Text(participant.username)
-        ],
       ),
     );
   }

@@ -17,13 +17,16 @@ class CarpoolDetail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final List<String> participantsID = List<String>.from(carpool.participants);
 
-    Future<List<User>> participantsFuture =
-        AuthMethods().getUserDetails2(participantsID);
+    // Future<List<User>> participantsFuture =
+    //     AuthMethods().getUserDetails2(participantsID);
+
+    Stream<List<User>> participantsStream =
+        AuthMethods().getUserDetailsStream(carpool.participants);
 
     return Scaffold(
       appBar: AppBar(title: Text('Carpool Detail')),
-      body: FutureBuilder<List<User>>(
-        future: participantsFuture,
+      body: StreamBuilder<List<User>>(
+        stream: participantsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(

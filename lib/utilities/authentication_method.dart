@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -115,14 +116,84 @@ class AuthMethods {
     return models.User.toUserModel(user);
   }
 
-  Future<List<models.User>> getUserDetails2(List<String> uids) async {
-    List<models.User> usersDetails = [];
-    for (String uid in uids) {
-      DocumentSnapshot userSnapshot =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      models.User user = models.User.toUserModel(userSnapshot);
-      usersDetails.add(user);
+  // Future<List<models.User>> getUserDetails2(List<String> uids) async {
+  //   List<models.User> usersDetails = [];
+  //   for (String uid in uids) {
+  //     DocumentSnapshot userSnapshot =
+  //         await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  //     models.User user = models.User.toUserModel(userSnapshot);
+  //     usersDetails.add(user);
+  //   }
+  //   return usersDetails;
+  // }
+
+  Stream<List<models.User>> getUserDetailsStream(List<String> uids) {
+    // Create a stream controller that allows sending data, error and done events on its stream.
+    final StreamController<List<models.User>> controller = StreamController();
+
+    // Track the subscriptions to dispose them later
+    final List<StreamSubscription<DocumentSnapshot>> subscriptions = [];
+
+    // Function to fetch the latest details of users and add them to the stream.
+    void updateUserDetails() async {
+      List<models.User> usersDetails = [];
+
+      for (String uid in uids) {
+        try {
+          DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .get();
+
+          models.User user = models.User.toUserModel(userSnapshot);
+          usersDetails.add(user);
+        } catch (e) {
+          // If there's an error, add it to the stream and break the loop.
+          controller.addError(e);
+          break;
+        }
+      }
+
+      // Once all the users are fetched, add the list to the stream.
+      if (!controller.isClosed) {
+        controller.add(usersDetails);
+      }
     }
-    return usersDetails;
+
+    // Set up listeners for each user ID.
+    for (String uid in uids) {
+      final subscription = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .snapshots()
+          .listen(
+        (userSnapshot) {
+          // If a change occurs, fetch the latest details of all users.
+          if (userSnapshot.exists) {
+            updateUserDetails();
+          }
+        },
+        onError: (error) {
+          // In case of an error with this subscription, add it to the stream.
+          controller.addError(error);
+        },
+      );
+
+      // Add the subscription to the list for future cancellation.
+      subscriptions.add(subscription);
+    }
+
+    // Cancel all subscriptions when the stream is no longer needed.
+    controller.onCancel = () {
+      for (var subscription in subscriptions) {
+        subscription.cancel();
+      }
+    };
+
+    // Trigger an initial update to populate the stream.
+    updateUserDetails();
+
+    // Return the stream.
+    return controller.stream;
   }
 }
