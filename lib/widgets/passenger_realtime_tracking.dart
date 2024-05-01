@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:school_ride_sharing/models/carpool.dart';
@@ -271,6 +270,81 @@ class _TestingState extends State<Testing> {
     markerIcon = await BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(size: Size(0.5, 0.5)),
       'assets/images/tracking.png',
+    );
+  }
+
+  // Future<void> checkProximityToDestination(LatLng driverCurrentLocation) async {
+  //   if (currentDestinationIndex < destionationList.length) {
+  //     LatLng targetDestination = destionationList[currentDestinationIndex];
+
+  //     double distance = Geolocator.distanceBetween(
+  //       driverCurrentLocation.latitude,
+  //       driverCurrentLocation.longitude,
+  //       targetDestination.latitude,
+  //       targetDestination.longitude,
+  //     );
+
+  //     if (currentDestinationIndex == destionationList.length - 1 &&
+  //         distance <= 50.0) {
+  //       if (!context.mounted) return;
+  //       showCustomDialog(context, 'Arrival',
+  //           'Carpool completed. Navigating to another page...',
+  //           onDismissed: onDialogDismissed);
+  //     } else if (distance <= 50.0) {
+  //       setState(() {
+  //         currentDestinationIndex++;
+  //       });
+  //     }
+  //   }
+
+  //   if (currentDestinationIndex < destionationList.length) {
+  //     if (currentDestinationIndex == destionationList.length - 1) {
+  //       showCustomDialog(context, 'Arrival',
+  //           'All kids fetched completed. Going to School....');
+  //     } else {
+  //       showCustomDialog(context, 'Arrival',
+  //           "You have reached your destination. Preparing the next route.");
+  //     }
+  //   }
+
+  void showCustomDialog(BuildContext context, String title, String message,
+      {VoidCallback? onDismissed}) {
+    showDialog(
+      context: context,
+      // Dialog is dismissible with a tap on the barrier
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            title,
+            style: TextStyle(
+              color: Colors.red.shade600,
+            ),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(
+              fontSize: 20,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Dismiss the dialog
+                if (onDismissed != null) {
+                  onDismissed();
+                }
+              },
+              child: const Text(
+                'Okay',
+                style: TextStyle(
+                  fontSize: 20,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

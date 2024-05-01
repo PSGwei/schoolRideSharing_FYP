@@ -5,7 +5,7 @@ import 'package:school_ride_sharing/models/carpool.dart';
 import 'package:school_ride_sharing/models/user.dart' as models;
 import 'package:school_ride_sharing/provider/user_provider.dart';
 import 'package:school_ride_sharing/widgets/real-time_tracking_map.dart';
-import 'package:school_ride_sharing/widgets/te.dart';
+import 'package:school_ride_sharing/widgets/passenger_realtime_tracking.dart';
 
 import 'carpool_participant_container.dart';
 

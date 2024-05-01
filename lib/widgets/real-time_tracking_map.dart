@@ -40,6 +40,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
   List<models.User> passengers = [];
   int currentDestinationIndex = 0;
 
+  bool isCurrentRouteComplete = false;
   bool isAllRouteCompleted = false;
   bool isRouteLoading = false;
 
@@ -54,19 +55,6 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
   void initState() {
     super.initState();
     passengers = widget.passengers;
-
-    carpoolDestination = LatLng(
-      double.parse(widget.carpool.destination.latitude),
-      double.parse(widget.carpool.destination.longitude),
-    );
-
-    for (var i in passengers) {
-      destionationList.add(LatLng(
-        double.parse(i.defaultAddress!.latitude),
-        double.parse(i.defaultAddress!.longitude),
-      ));
-    }
-    destionationList.add(carpoolDestination);
 
     initializeDriverLocation().then((_) {
       setState(() {
@@ -149,6 +137,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
             itemBuilder: (context, index) => TrackingDashbaord(
               onGoingIndex: currentDestinationIndex,
               index: index,
+              // isCurrentRouteComplete: isCurrentRouteComplete,
               passenger: passengers[index],
             ),
           ),
@@ -163,7 +152,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
     if (driverCurrentPosition != null) {
       // set initial location
       Geofire.setLocation(
-        widget.carpool.uid,
+        FirebaseAuth.instance.currentUser!.uid,
         driverCurrentPosition!.latitude,
         driverCurrentPosition!.longitude,
       );
@@ -210,7 +199,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
                 return; // Checks if the widget is still in the widget tree
               if (driverCurrentLatLng != null && controllerGoogleMap != null) {
                 if (_debounce?.isActive ?? false) _debounce!.cancel();
-                _debounce = Timer(const Duration(milliseconds: 500), () {
+                _debounce = Timer(const Duration(milliseconds: 3000), () {
                   controllerGoogleMap!.animateCamera(
                       CameraUpdate.newCameraPosition(cameraPosition));
                 });
@@ -363,8 +352,8 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
         googleMapKey,
         PointLatLng(
             driverCurrentLatLng!.latitude, driverCurrentLatLng!.longitude),
-        PointLatLng(
-            destionationList[0].latitude, destionationList[0].longitude),
+        PointLatLng(double.parse(passengers[0].defaultAddress!.latitude),
+            double.parse(passengers[0].defaultAddress!.longitude)),
         travelMode: TravelMode.driving,
       );
 
@@ -399,45 +388,42 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
   }
 
   Future<void> setLocationMarkers() async {
-    if (driverCurrentLatLng != null) {
-      final newMarkers = <Marker>{}; // Temporary set to hold new markers
-      for (var passenger in widget.passengers) {
-        LatLng passengerPosition = LatLng(
-            double.parse(passenger.defaultAddress!.latitude),
-            double.parse(passenger.defaultAddress!.longitude));
+    final newMarkers = <Marker>{}; // Temporary set to hold new markers
+    for (var passenger in widget.passengers) {
+      LatLng passengerPosition = LatLng(
+          double.parse(passenger.defaultAddress!.latitude),
+          double.parse(passenger.defaultAddress!.longitude));
 
-        Marker passengerMarker = Marker(
-            markerId: MarkerId(
-                passenger.uid), // Assume each passenger has a unique id
-            position: passengerPosition,
-            icon: BitmapDescriptor.defaultMarker,
-            infoWindow: InfoWindow(
-                title: passenger.username) // Optional: shows name on tap
-            );
+      Marker passengerMarker = Marker(
+          markerId:
+              MarkerId(passenger.uid), // Assume each passenger has a unique id
+          position: passengerPosition,
+          icon: BitmapDescriptor.defaultMarker,
+          infoWindow: InfoWindow(
+              title: passenger.username) // Optional: shows name on tap
+          );
 
-        newMarkers.add(passengerMarker);
-      }
-      newMarkers.add(
-        Marker(
-          markerId: const MarkerId('driverCurrentLocation'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          // icon: carIconNearbyDriver!,
-          position: driverCurrentLatLng!,
-        ),
-      );
-      newMarkers.add(
-        Marker(
-          markerId: const MarkerId('carpoolDestination'),
-          icon:
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow),
-          // icon: carIconNearbyDriver!,
-          position: carpoolDestination,
-        ),
-      );
-      setState(() {
-        markers = newMarkers; // Replace old markers with new ones
-      });
+      newMarkers.add(passengerMarker);
     }
+    newMarkers.add(
+      Marker(
+        markerId: const MarkerId('driverCurrentLocation'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        // icon: carIconNearbyDriver!,
+        position: driverCurrentLatLng!,
+      ),
+    );
+    newMarkers.add(
+      Marker(
+        markerId: const MarkerId('carpoolDestination'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow),
+        // icon: carIconNearbyDriver!,
+        position: carpoolDestination,
+      ),
+    );
+    setState(() {
+      markers = newMarkers; // Replace old markers with new ones
+    });
   }
 
   Future<void> initializeDriverLocation() async {
@@ -449,41 +435,8 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
         driverCurrentLatLng = LatLng(
             driverCurrentPosition!.latitude, driverCurrentPosition!.longitude);
       });
-
-      updateDriverLocationInDatabase(driverCurrentPosition!);
     } catch (e) {
       print('Failed to get initial location: $e');
-    }
-  }
-
-  void updateDriverLocationInDatabase(Position position) {
-    Geofire.setLocation(
-      widget.carpool.uid,
-      position.latitude,
-      position.longitude,
-    );
-  }
-
-  Future<void> listenToDriverLocationUpdates() async {
-    Geofire.initialize('onlineDrivers');
-    try {
-      final result = await Geofire.getLocation(widget.carpool.uid);
-      setState(() {
-        driverCurrentLatLng = LatLng(result['lng'], result['lat']);
-      });
-    } catch (error) {
-      print(error.toString());
-    }
-    // updateDriverLocationInDatabase(position);
-  }
-
-  void updateMapCamera(LatLng? location) {
-    if (location != null && controllerGoogleMap != null) {
-      controllerGoogleMap!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: location, zoom: 16),
-        ),
-      );
     }
   }
 
@@ -555,7 +508,20 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
         return distA.compareTo(distB);
       });
 
-      setState(() {});
+      setState(() {
+        carpoolDestination = LatLng(
+          double.parse(widget.carpool.destination.latitude),
+          double.parse(widget.carpool.destination.longitude),
+        );
+
+        for (var i in passengers) {
+          destionationList.add(LatLng(
+            double.parse(i.defaultAddress!.latitude),
+            double.parse(i.defaultAddress!.longitude),
+          ));
+        }
+        destionationList.add(carpoolDestination);
+      });
     }
   }
 

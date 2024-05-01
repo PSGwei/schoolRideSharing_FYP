@@ -61,6 +61,7 @@ class _UploadEvidenceState extends State<UploadEvidence> {
   }
 
   void uploadImageToFirebase(Uint8List imageFile) async {
+    final String? imageURL;
     showDialog(
       context: context,
       barrierDismissible: false, // User must tap button to close dialog
@@ -72,51 +73,58 @@ class _UploadEvidenceState extends State<UploadEvidence> {
     );
 
     try {
-      final String imageURL = await StorageMethods().uploadImageToStorage(
+      imageURL = await StorageMethods().uploadImageToStorage(
         'carpool evidences',
         imageFile,
         carpool: widget.carpool,
-      );
-
-      //update carpool status
-      final carpoolSnapshot = await FirebaseFirestore.instance
-          .collection('carpools')
-          .where('id', isEqualTo: widget.carpool.id)
-          .limit(1)
-          .get();
-
-      final userSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('uid', isEqualTo: widget.carpool.uid)
-          .limit(1)
-          .get();
-
-      if (carpoolSnapshot.docs.isNotEmpty) {
-        await carpoolSnapshot.docs[0].reference.update({
-          'status': true,
-          'evidence': imageURL,
-        });
-      }
-
-      final userCredit = int.parse(carpoolSnapshot.docs[0].get('credit'));
-
-      if (userSnapshot.docs.isNotEmpty) {
-        await carpoolSnapshot.docs[0].reference.update({
-          'credit': userCredit + 10,
-        });
-      }
-
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
-      displaySnackbar('Image uploaded successfully', context);
-
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const TabsScreen()),
       );
     } catch (e) {
       if (!context.mounted) return;
       Navigator.of(context).pop();
       displaySnackbar('Failed to upload image', context);
+      return;
+    }
+
+    if (imageURL != null) {
+      try {
+        //update carpool status
+        final carpoolSnapshot = await FirebaseFirestore.instance
+            .collection('carpools')
+            .where('id', isEqualTo: widget.carpool.id)
+            .limit(1)
+            .get();
+
+        final userSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .where('uid', isEqualTo: widget.carpool.uid)
+            .limit(1)
+            .get();
+
+        if (carpoolSnapshot.docs.isNotEmpty) {
+          await carpoolSnapshot.docs[0].reference.update({
+            'status': true,
+            'evidence': imageURL,
+          });
+        }
+
+        final userCredit = int.parse(userSnapshot.docs[0].get('credit'));
+
+        if (userSnapshot.docs.isNotEmpty) {
+          await carpoolSnapshot.docs[0].reference.update({
+            'credit': userCredit + 10,
+          });
+        }
+
+        if (!context.mounted) return;
+        Navigator.of(context).pop();
+        displaySnackbar('Image uploaded successfully', context);
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const TabsScreen()),
+        );
+      } catch (e) {
+        print(e.toString());
+      }
     }
   }
 }

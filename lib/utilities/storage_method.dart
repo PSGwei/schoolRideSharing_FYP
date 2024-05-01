@@ -16,7 +16,7 @@ class StorageMethods {
     Reference ref;
 
     if (carpool != null) {
-      ref = firebaseStorage.ref().child(carpool.id).child('${carpool.uid}.png');
+      ref = firebaseStorage.ref().child(childName).child('${carpool.uid}.png');
     } else {
       ref = firebaseStorage
           .ref()
