@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:school_ride_sharing/screens/authentication.dart';
 import 'package:school_ride_sharing/screens/tabs.dart';
+import 'package:school_ride_sharing/utilities/firebase_push_notification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp();
-
+  await FirebaseAPI().initNotification();
   runApp(const ProviderScope(child: MyApp()));
 }
 

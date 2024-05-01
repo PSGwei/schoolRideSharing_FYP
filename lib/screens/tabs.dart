@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:school_ride_sharing/screens/carpool_manage/carpool_manage.dart';
 import 'package:school_ride_sharing/screens/carpool_list.dart';
 import 'package:school_ride_sharing/screens/completed_carpool.dart';
@@ -17,17 +18,10 @@ class TabsScreen extends StatefulWidget {
 class _TabsScreenState extends State<TabsScreen> {
   int selectedPageIndex = 0;
 
-  void setupPushNotification() async {
-    final fcm = FirebaseMessaging.instance;
-    await fcm.requestPermission();
-    final token = await fcm.getToken();
-    print("fcm token $token");
-  }
-
   @override
   void initState() {
     super.initState();
-    setupPushNotification();
+    // setupPushNotification();
   }
 
   void selectPage(int index) {
