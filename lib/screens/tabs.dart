@@ -18,10 +18,17 @@ class TabsScreen extends StatefulWidget {
 class _TabsScreenState extends State<TabsScreen> {
   int selectedPageIndex = 0;
 
+  void setupPushNotification() async {
+    final fcm = FirebaseMessaging.instance;
+    await fcm.requestPermission();
+    final token = await fcm.getToken();
+    print("fcm token $token");
+  }
+
   @override
   void initState() {
     super.initState();
-    // setupPushNotification();
+    setupPushNotification();
   }
 
   void selectPage(int index) {
