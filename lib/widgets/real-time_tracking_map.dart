@@ -302,6 +302,12 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
   }
 
   Future<void> updateRoute(LatLng start, LatLng destination) async {
+    // Ensure GoogleMapController is not disposed and is still valid
+    if (controllerGoogleMap == null) {
+      print('GoogleMapController is not initialized or has been disposed.');
+      return;
+    }
+
     List<LatLng> polylineCoordinates = [];
     PolylinePoints polylinePoints = PolylinePoints();
 

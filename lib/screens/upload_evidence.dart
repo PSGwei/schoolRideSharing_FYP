@@ -85,46 +85,48 @@ class _UploadEvidenceState extends State<UploadEvidence> {
       return;
     }
 
-    if (imageURL != null) {
-      try {
-        //update carpool status
-        final carpoolSnapshot = await FirebaseFirestore.instance
-            .collection('carpools')
-            .where('id', isEqualTo: widget.carpool.id)
-            .limit(1)
-            .get();
+    try {
+      //update carpool status
+      final carpoolSnapshot = await FirebaseFirestore.instance
+          .collection('carpools')
+          .where('id', isEqualTo: widget.carpool.id)
+          .limit(1)
+          .get();
 
-        final userSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .where('uid', isEqualTo: widget.carpool.uid)
-            .limit(1)
-            .get();
-
-        if (carpoolSnapshot.docs.isNotEmpty) {
-          await carpoolSnapshot.docs[0].reference.update({
-            'status': true,
-            'evidence': imageURL,
-          });
-        }
-
-        final userCredit = int.parse(userSnapshot.docs[0].get('credit'));
-
-        if (userSnapshot.docs.isNotEmpty) {
-          await carpoolSnapshot.docs[0].reference.update({
-            'credit': userCredit + 10,
-          });
-        }
-
-        if (!context.mounted) return;
-        Navigator.of(context).pop();
-        displaySnackbar('Image uploaded successfully', context);
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const TabsScreen()),
-        );
-      } catch (e) {
-        print(e.toString());
+      if (carpoolSnapshot.docs.isNotEmpty) {
+        await carpoolSnapshot.docs[0].reference.update({
+          'status': true,
+          'evidence': imageURL,
+        });
       }
+    } catch (e) {
+      print(e.toString());
     }
+
+    try {
+      final userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('uid', isEqualTo: widget.carpool.uid)
+          .limit(1)
+          .get();
+
+      if (userSnapshot.docs.isNotEmpty) {
+        final userCredit = userSnapshot.docs[0].get('credit');
+
+        await userSnapshot.docs[0].reference.update({
+          'credit': userCredit + 10,
+        });
+      }
+    } catch (e) {
+      print(e.toString());
+    }
+
+    if (!context.mounted) return;
+    Navigator.of(context).pop();
+    displaySnackbar('Image uploaded successfully', context);
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const TabsScreen()),
+    );
   }
 }
