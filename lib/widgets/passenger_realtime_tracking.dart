@@ -91,7 +91,7 @@ class _TestingState extends State<Testing> {
           markers: markers,
         ),
         DraggableScrollableSheet(
-          initialChildSize: 0.2,
+          initialChildSize: 0.17,
           minChildSize: 0.15,
           maxChildSize: 0.45,
           builder: (context, controller) => ClipRRect(
@@ -164,7 +164,7 @@ class _TestingState extends State<Testing> {
         currentPositionOfUser!.latitude, currentPositionOfUser!.longitude);
 
     CameraPosition cameraPosition =
-        CameraPosition(target: positionOfUserInLatLng, zoom: 16);
+        CameraPosition(target: positionOfUserInLatLng, zoom: 17);
     controllerGoogleMap!
         .animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
 
@@ -181,7 +181,8 @@ class _TestingState extends State<Testing> {
       final double lng = data[1] as double;
       final LatLng position = LatLng(lat, lng);
 
-      addOrUpdateMarker(const MarkerId('driver'), position, icon: markerIcon);
+      addOrUpdateMarker(const MarkerId('driverMarker'), position,
+          icon: markerIcon);
 
       setState(() {
         driverCurrentLatLng = position;
@@ -195,9 +196,6 @@ class _TestingState extends State<Testing> {
     if (driverCurrentLatLng != null) {
       final newMarkers = <Marker>{}; // Temporary set to hold new markers
       for (var passenger in widget.passengers) {
-        if (passenger.uid == FirebaseAuth.instance.currentUser!.uid) {
-          continue;
-        }
         LatLng passengerPosition = LatLng(
             double.parse(passenger.defaultAddress!.latitude),
             double.parse(passenger.defaultAddress!.longitude));
@@ -272,40 +270,6 @@ class _TestingState extends State<Testing> {
       'assets/images/tracking.png',
     );
   }
-
-  // Future<void> checkProximityToDestination(LatLng driverCurrentLocation) async {
-  //   if (currentDestinationIndex < destionationList.length) {
-  //     LatLng targetDestination = destionationList[currentDestinationIndex];
-
-  //     double distance = Geolocator.distanceBetween(
-  //       driverCurrentLocation.latitude,
-  //       driverCurrentLocation.longitude,
-  //       targetDestination.latitude,
-  //       targetDestination.longitude,
-  //     );
-
-  //     if (currentDestinationIndex == destionationList.length - 1 &&
-  //         distance <= 50.0) {
-  //       if (!context.mounted) return;
-  //       showCustomDialog(context, 'Arrival',
-  //           'Carpool completed. Navigating to another page...',
-  //           onDismissed: onDialogDismissed);
-  //     } else if (distance <= 50.0) {
-  //       setState(() {
-  //         currentDestinationIndex++;
-  //       });
-  //     }
-  //   }
-
-  //   if (currentDestinationIndex < destionationList.length) {
-  //     if (currentDestinationIndex == destionationList.length - 1) {
-  //       showCustomDialog(context, 'Arrival',
-  //           'All kids fetched completed. Going to School....');
-  //     } else {
-  //       showCustomDialog(context, 'Arrival',
-  //           "You have reached your destination. Preparing the next route.");
-  //     }
-  //   }
 
   void showCustomDialog(BuildContext context, String title, String message,
       {VoidCallback? onDismissed}) {

@@ -199,7 +199,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
                 return; // Checks if the widget is still in the widget tree
               if (driverCurrentLatLng != null && controllerGoogleMap != null) {
                 if (_debounce?.isActive ?? false) _debounce!.cancel();
-                _debounce = Timer(const Duration(milliseconds: 3000), () {
+                _debounce = Timer(const Duration(milliseconds: 1000), () {
                   controllerGoogleMap!.animateCamera(
                       CameraUpdate.newCameraPosition(cameraPosition));
                 });
