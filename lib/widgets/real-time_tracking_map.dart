@@ -95,7 +95,7 @@ class _MapDisplayState extends ConsumerState<MapDisplay> {
       ),
       body: isRouteLoading
           ? const Center(child: LoadingIndicator(message: 'Loading the map...'))
-          : driverCurrentPosition == null
+          : driverCurrentPosition == null || polylines.isEmpty
               ? const Center(child: Text('Loading...'))
               : buildMap(),
     );
